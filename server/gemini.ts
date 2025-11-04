@@ -954,7 +954,7 @@ When providing code:
 export async function chatWithAI(
   message: string,
   conversationHistory: Array<{ role: string; content: string }>
-): Promise<string> {
+): Promise<{ response: string; metadata?: string }> {
   try {
     // Add system context as the first message if history is empty
     const contents = [];
@@ -1001,7 +1001,18 @@ export async function chatWithAI(
       throw new Error("Response was too short or empty");
     }
 
-    return responseText;
+    try {
+      const parsed = JSON.parse(responseText);
+      if (parsed.metadata) {
+        return {
+          response: parsed.explanation || responseText,
+          metadata: JSON.stringify(parsed.metadata),
+        };
+      }
+    } catch (e) {
+    }
+
+    return { response: responseText };
   } catch (error) {
     console.error("Chat error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";

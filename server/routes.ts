@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: msg.content,
       }));
 
-      const response = await chatWithAI(message, conversationHistory);
+      const aiResponse = await chatWithAI(message, conversationHistory);
 
       await storage.createMessage({
         projectId,
@@ -132,7 +132,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assistantMessage = await storage.createMessage({
         projectId,
         role: "assistant",
-        content: response,
+        content: aiResponse.response,
+        metadata: aiResponse.metadata,
       });
 
       res.json(assistantMessage);
