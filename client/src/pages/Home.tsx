@@ -166,6 +166,7 @@ export default function Home() {
     id: msg.id.toString(),
     role: msg.role as "user" | "assistant",
     content: msg.content,
+    metadata: msg.metadata,
   }));
 
   const handleSendMessage = async (message: string) => {

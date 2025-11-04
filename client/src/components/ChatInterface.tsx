@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Send, Loader2, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import SolutionOptions from "./SolutionOptions";
+import type { SolutionOption } from "@shared/schema";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  metadata?: string | null;
 }
 
 interface ChatInterfaceProps {
@@ -36,6 +39,11 @@ export default function ChatInterface({
     }
   };
 
+  const handleSelectOption = (optionId: string, messageContent: string) => {
+    const selectionMessage = `من ${messageContent} را انتخاب کردم. لطفاً این راه‌حل را پیاده‌سازی کن.`;
+    onSendMessage?.(selectionMessage);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -54,37 +62,67 @@ export default function ChatInterface({
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 max-w-3xl ${
-                message.role === "user" ? "ml-auto" : "mr-auto"
-              }`}
-              data-testid={`message-${message.role}-${message.id}`}
-            >
-              {message.role === "assistant" && (
-                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-gray-800 dark:text-white" />
+          messages.map((message) => {
+            let solutionOptions: SolutionOption[] | null = null;
+            if (message.metadata && message.role === "assistant") {
+              try {
+                const parsed = JSON.parse(message.metadata);
+                if (parsed.solutionOptions && Array.isArray(parsed.solutionOptions)) {
+                  solutionOptions = parsed.solutionOptions;
+                }
+              } catch (e) {
+                console.error("Failed to parse message metadata:", e);
+              }
+            }
+
+            return (
+              <div key={message.id}>
+                <div
+                  className={`flex gap-3 max-w-3xl ${
+                    message.role === "user" ? "ml-auto" : "mr-auto"
+                  }`}
+                  data-testid={`message-${message.role}-${message.id}`}
+                >
+                  {message.role === "assistant" && (
+                    <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-gray-800 dark:text-white" />
+                    </div>
+                  )}
+                  <div
+                    className={`flex-1 px-5 py-3 rounded-2xl ${
+                      message.role === "user"
+                        ? "glass-heavy text-gray-800 dark:text-white"
+                        : "glass-card text-gray-800 dark:text-white"
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  </div>
+                  {message.role === "user" && (
+                    <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-gray-800 dark:text-white" />
+                    </div>
+                  )}
                 </div>
-              )}
-              <div
-                className={`flex-1 px-5 py-3 rounded-2xl ${
-                  message.role === "user"
-                    ? "glass-heavy text-gray-800 dark:text-white"
-                    : "glass-card text-gray-800 dark:text-white"
-                }`}
-              >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {message.content}
-                </p>
+                {solutionOptions && solutionOptions.length > 0 && (
+                  <div className="max-w-full mt-4">
+                    <SolutionOptions
+                      options={solutionOptions}
+                      onSelect={(optionId) => {
+                        const selectedOption = solutionOptions.find(
+                          (opt) => opt.id === optionId
+                        );
+                        if (selectedOption) {
+                          handleSelectOption(optionId, selectedOption.title);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-              {message.role === "user" && (
-                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-gray-800 dark:text-white" />
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
         {isLoading && (
           <div className="flex gap-3 max-w-3xl mr-auto">
