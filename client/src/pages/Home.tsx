@@ -231,8 +231,8 @@ export default function Home() {
                 data-testid="button-view-chat"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   viewMode === "chat"
-                    ? "glass-card text-white"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "glass-card text-gray-800 dark:text-white"
+                    : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
                 <MessageSquare className="w-4 h-4 inline mr-2" />
@@ -243,8 +243,8 @@ export default function Home() {
                 data-testid="button-view-editor"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   viewMode === "editor"
-                    ? "glass-card text-white"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "glass-card text-gray-800 dark:text-white"
+                    : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
                 <Code className="w-4 h-4 inline mr-2" />
@@ -255,8 +255,8 @@ export default function Home() {
                 data-testid="button-view-figma"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   viewMode === "figma"
-                    ? "glass-card text-white"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "glass-card text-gray-800 dark:text-white"
+                    : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
                 <Image className="w-4 h-4 inline mr-2" />
@@ -266,7 +266,7 @@ export default function Home() {
             <button
               onClick={() => setShowPreview(!showPreview)}
               data-testid="button-toggle-preview"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all"
             >
               {showPreview ? (
                 <>

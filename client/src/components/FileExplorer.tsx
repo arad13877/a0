@@ -52,8 +52,8 @@ function FileTreeItem({
       <div
         className={`h-8 flex items-center gap-2 px-2 cursor-pointer rounded-lg transition-all ${
           isSelected
-            ? "glass-card text-white"
-            : "text-white/70 hover:text-white hover:bg-white/10"
+            ? "glass-card text-gray-800 dark:text-white"
+            : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
@@ -67,15 +67,15 @@ function FileTreeItem({
               <ChevronRight className="w-4 h-4" />
             )}
             {isExpanded ? (
-              <FolderOpen className="w-4 h-4 text-yellow-300" />
+              <FolderOpen className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
             ) : (
-              <Folder className="w-4 h-4 text-yellow-300" />
+              <Folder className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
             )}
           </>
         ) : (
           <>
             <div className="w-4" />
-            <FileCode className="w-4 h-4 text-blue-300" />
+            <FileCode className="w-4 h-4 text-blue-600 dark:text-blue-300" />
           </>
         )}
         <span className="text-sm font-mono truncate">{node.name}</span>
@@ -107,19 +107,19 @@ export default function FileExplorer({
   return (
     <div className="w-64 min-w-[240px] flex flex-col h-full">
       <div className="h-12 flex items-center justify-between px-4">
-        <span className="text-sm font-semibold text-white" data-testid="files-header">
+        <span className="text-sm font-semibold text-gray-800 dark:text-white" data-testid="files-header">
           Files
         </span>
         <div className="flex items-center gap-1">
           <button
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all"
             onClick={onNewFile}
             data-testid="button-new-file"
           >
             <File className="w-4 h-4" />
           </button>
           <button
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all"
             onClick={onNewFolder}
             data-testid="button-new-folder"
           >

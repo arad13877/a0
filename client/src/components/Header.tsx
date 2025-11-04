@@ -28,9 +28,9 @@ export default function Header({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl glass-float flex items-center justify-center">
-            <Code2 className="w-5 h-5 text-white drop-shadow-lg" data-testid="logo-icon" />
+            <Code2 className="w-5 h-5 text-gray-800 dark:text-white drop-shadow-lg" data-testid="logo-icon" />
           </div>
-          <span className="text-xl font-bold text-white drop-shadow-md gradient-text" data-testid="brand-name">
+          <span className="text-xl font-bold drop-shadow-md gradient-text" data-testid="brand-name">
             AI Code Agent
           </span>
         </div>
@@ -38,7 +38,7 @@ export default function Header({
 
       <div className="flex-1 flex items-center justify-center">
         <div className="glass-card px-4 py-2 rounded-full">
-          <div className="text-sm font-mono text-white truncate max-w-xs" data-testid="project-name">
+          <div className="text-sm font-mono text-gray-800 dark:text-white truncate max-w-xs" data-testid="project-name">
             {projectName}
           </div>
         </div>
@@ -48,21 +48,21 @@ export default function Header({
         <button
           onClick={onDownload}
           data-testid="button-download"
-          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
         >
           <Download className="w-5 h-5" />
         </button>
         <button
           onClick={toggleTheme}
           data-testid="button-theme-toggle"
-          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
         >
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         <button
           onClick={onSettings}
           data-testid="button-settings"
-          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
         >
           <Settings className="w-5 h-5" />
         </button>

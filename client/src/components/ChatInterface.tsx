@@ -42,12 +42,12 @@ export default function ChatInterface({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="glass-card w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
-              <Bot className="w-8 h-8 text-white" />
+              <Bot className="w-8 h-8 text-gray-800 dark:text-white" />
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-white" data-testid="empty-state-title">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-white" data-testid="empty-state-title">
               Start a conversation
             </h3>
-            <p className="text-sm text-white/70 max-w-md" data-testid="empty-state-description">
+            <p className="text-sm text-gray-600 dark:text-white/70 max-w-md" data-testid="empty-state-description">
               Ask me to create components, pages, or entire applications. I
               specialize in React, Next.js, Tailwind, and modern web
               development.
@@ -64,14 +64,14 @@ export default function ChatInterface({
             >
               {message.role === "assistant" && (
                 <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-white" />
+                  <Bot className="w-5 h-5 text-gray-800 dark:text-white" />
                 </div>
               )}
               <div
                 className={`flex-1 px-5 py-3 rounded-2xl ${
                   message.role === "user"
-                    ? "glass-heavy text-white"
-                    : "glass-card text-white"
+                    ? "glass-heavy text-gray-800 dark:text-white"
+                    : "glass-card text-gray-800 dark:text-white"
                 }`}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -80,7 +80,7 @@ export default function ChatInterface({
               </div>
               {message.role === "user" && (
                 <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-white" />
+                  <User className="w-5 h-5 text-gray-800 dark:text-white" />
                 </div>
               )}
             </div>
@@ -89,10 +89,10 @@ export default function ChatInterface({
         {isLoading && (
           <div className="flex gap-3 max-w-3xl mr-auto">
             <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
-              <Bot className="w-5 h-5 text-white" />
+              <Bot className="w-5 h-5 text-gray-800 dark:text-white" />
             </div>
             <div className="flex-1 px-5 py-3 rounded-2xl glass-card">
-              <Loader2 className="w-5 h-5 animate-spin text-white" />
+              <Loader2 className="w-5 h-5 animate-spin text-gray-800 dark:text-white" />
             </div>
           </div>
         )}
@@ -105,13 +105,13 @@ export default function ChatInterface({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me to create something..."
-            className="w-full min-h-[120px] px-4 py-3 bg-transparent text-white placeholder:text-white/50 resize-none outline-none"
+            className="w-full min-h-[120px] px-4 py-3 bg-transparent text-gray-800 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50 resize-none outline-none"
             data-testid="input-chat"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="absolute bottom-3 right-3 glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute bottom-3 right-3 glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="button-send"
           >
             <Send className="w-5 h-5" />
