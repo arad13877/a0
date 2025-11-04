@@ -242,4 +242,187 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DbStorage implements IStorage {
+  private db: any;
+
+  constructor(dbInstance: any) {
+    this.db = dbInstance;
+  }
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const { projects } = await import('@shared/schema');
+    const [project] = await this.db.insert(projects).values(insertProject).returning();
+    return project;
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const { projects } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const [project] = await this.db.select().from(projects).where(eq(projects.id, id));
+    return project;
+  }
+
+  async getAllProjects(): Promise<Project[]> {
+    const { projects } = await import('@shared/schema');
+    const { desc } = await import('drizzle-orm');
+    return this.db.select().from(projects).orderBy(desc(projects.createdAt));
+  }
+
+  async updateProject(id: number, updates: Partial<InsertProject>): Promise<Project | undefined> {
+    const { projects } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const [project] = await this.db.update(projects)
+      .set(updates)
+      .where(eq(projects.id, id))
+      .returning();
+    return project;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const { projects, files, messages } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    await this.db.delete(files).where(eq(files.projectId, id));
+    await this.db.delete(messages).where(eq(messages.projectId, id));
+    const result = await this.db.delete(projects).where(eq(projects.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async createFile(insertFile: InsertFile): Promise<File> {
+    const { files } = await import('@shared/schema');
+    const [file] = await this.db.insert(files).values(insertFile).returning();
+    return file;
+  }
+
+  async getFile(id: number): Promise<File | undefined> {
+    const { files } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const [file] = await this.db.select().from(files).where(eq(files.id, id));
+    return file;
+  }
+
+  async getFilesByProject(projectId: number): Promise<File[]> {
+    const { files } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    return this.db.select().from(files).where(eq(files.projectId, projectId));
+  }
+
+  async updateFile(id: number, content: string): Promise<File | undefined> {
+    const { files, fileVersions } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [file] = await this.db.select().from(files).where(eq(files.id, id));
+    if (!file) return undefined;
+
+    const versions = await this.db.select().from(fileVersions).where(eq(fileVersions.fileId, id));
+    const nextVersion = versions.length + 1;
+
+    await this.db.insert(fileVersions).values({
+      fileId: id,
+      content: file.content,
+      version: nextVersion,
+    });
+
+    const [updated] = await this.db.update(files)
+      .set({ content, updatedAt: new Date() })
+      .where(eq(files.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteFile(id: number): Promise<boolean> {
+    const { files } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const result = await this.db.delete(files).where(eq(files.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const { messages } = await import('@shared/schema');
+    const [message] = await this.db.insert(messages).values(insertMessage).returning();
+    return message;
+  }
+
+  async getMessagesByProject(projectId: number): Promise<Message[]> {
+    const { messages } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    return this.db.select().from(messages)
+      .where(eq(messages.projectId, projectId))
+      .orderBy(messages.createdAt);
+  }
+
+  async deleteMessagesByProject(projectId: number): Promise<boolean> {
+    const { messages } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    await this.db.delete(messages).where(eq(messages.projectId, projectId));
+    return true;
+  }
+
+  async createFileVersion(insertVersion: InsertFileVersion): Promise<FileVersion> {
+    const { fileVersions } = await import('@shared/schema');
+    const [version] = await this.db.insert(fileVersions).values(insertVersion).returning();
+    return version;
+  }
+
+  async getFileVersions(fileId: number): Promise<FileVersion[]> {
+    const { fileVersions } = await import('@shared/schema');
+    const { eq, desc } = await import('drizzle-orm');
+    return this.db.select().from(fileVersions)
+      .where(eq(fileVersions.fileId, fileId))
+      .orderBy(desc(fileVersions.version));
+  }
+
+  async restoreFileVersion(fileId: number, versionId: number): Promise<File | undefined> {
+    const { files, fileVersions } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [file] = await this.db.select().from(files).where(eq(files.id, fileId));
+    const [version] = await this.db.select().from(fileVersions).where(eq(fileVersions.id, versionId));
+
+    if (!file || !version || version.fileId !== fileId) return undefined;
+
+    const [updated] = await this.db.update(files)
+      .set({ content: version.content, updatedAt: new Date() })
+      .where(eq(files.id, fileId))
+      .returning();
+    return updated;
+  }
+
+  async createTest(insertTest: InsertTest): Promise<Test> {
+    const { tests } = await import('@shared/schema');
+    const [test] = await this.db.insert(tests).values(insertTest).returning();
+    return test;
+  }
+
+  async getTestsByFile(fileId: number): Promise<Test[]> {
+    const { tests } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    return this.db.select().from(tests).where(eq(tests.fileId, fileId));
+  }
+
+  async updateTest(id: number, updates: Partial<InsertTest>): Promise<Test | undefined> {
+    const { tests } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const [test] = await this.db.update(tests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tests.id, id))
+      .returning();
+    return test;
+  }
+
+  async deleteTest(id: number): Promise<boolean> {
+    const { tests } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const result = await this.db.delete(tests).where(eq(tests.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+}
+
+let storage: IStorage;
+
+if (process.env.DATABASE_URL) {
+  const { db } = await import('./db');
+  storage = new DbStorage(db);
+} else {
+  storage = new MemStorage();
+}
+
+export { storage };

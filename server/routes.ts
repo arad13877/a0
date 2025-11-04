@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateCode, chatWithAI, analyzeDesign, generateTests } from "./gemini";
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
+import { registerGitRoutes } from "./git";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req: Request, res: Response) => {
@@ -385,6 +386,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to restore file version" });
     }
   });
+
+  registerGitRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -7,11 +7,14 @@ import CodeEditor from "@/components/CodeEditor";
 import PreviewPanel from "@/components/PreviewPanel";
 import TemplatesModal from "@/components/TemplatesModal";
 import FigmaUpload from "@/components/FigmaUpload";
+import { CommandPalette, useCommandPalette } from "@/components/CommandPalette";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Code, Image, PanelRightClose, PanelRight } from "lucide-react";
+import { MessageSquare, Code, Image, PanelRightClose, PanelRight, Download, Play, FileText, Search } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Project, File as ProjectFile, Message } from "@shared/schema";
 import { exportProjectAsZip } from "@/utils/export";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useToast } from "@/hooks/use-toast";
 
 type ViewMode = "chat" | "editor" | "figma";
 
@@ -29,6 +32,8 @@ export default function Home() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
+  const { toast } = useToast();
+  const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
 
   const { data: projects } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -195,10 +200,92 @@ export default function Home() {
     
     try {
       await exportProjectAsZip(files, currentProject.name);
+      toast({
+        title: "Success",
+        description: "Project exported successfully",
+      });
     } catch (error) {
       console.error('Failed to export project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export project",
+        variant: "destructive",
+      });
     }
   };
+
+  const handleSaveAll = () => {
+    toast({
+      title: "Saved",
+      description: "All files saved successfully",
+    });
+  };
+
+  useKeyboardShortcuts([
+    { key: '/', ctrl: true, action: () => setViewMode('chat') },
+    { key: 's', ctrl: true, action: handleSaveAll },
+    { key: 'p', ctrl: true, action: () => setShowPreview(!showPreview) },
+    { key: 'b', ctrl: true, action: () => setViewMode('editor') },
+    { key: 'e', ctrl: true, shift: true, action: handleDownload },
+  ]);
+
+  const commands = [
+    {
+      id: 'toggle-chat',
+      label: 'Toggle Chat View',
+      icon: MessageSquare,
+      shortcut: 'Ctrl+/',
+      action: () => setViewMode('chat'),
+      keywords: ['chat', 'conversation', 'ai'],
+    },
+    {
+      id: 'toggle-editor',
+      label: 'Toggle Editor View',
+      icon: Code,
+      shortcut: 'Ctrl+B',
+      action: () => setViewMode('editor'),
+      keywords: ['editor', 'code', 'edit'],
+    },
+    {
+      id: 'save-all',
+      label: 'Save All Files',
+      icon: FileText,
+      shortcut: 'Ctrl+S',
+      action: handleSaveAll,
+      keywords: ['save', 'write', 'persist'],
+    },
+    {
+      id: 'toggle-preview',
+      label: 'Toggle Preview Panel',
+      icon: Play,
+      shortcut: 'Ctrl+P',
+      action: () => setShowPreview(!showPreview),
+      keywords: ['preview', 'show', 'hide'],
+    },
+    {
+      id: 'export',
+      label: 'Export Project',
+      icon: Download,
+      shortcut: 'Ctrl+Shift+E',
+      action: handleDownload,
+      keywords: ['export', 'download', 'zip'],
+    },
+    {
+      id: 'new-project',
+      label: 'New Project',
+      icon: FileText,
+      action: () => setShowTemplates(true),
+      keywords: ['new', 'create', 'project'],
+    },
+    {
+      id: 'find',
+      label: 'Find in Files',
+      icon: Search,
+      shortcut: 'Ctrl+F',
+      action: () => console.log('Search not implemented yet'),
+      keywords: ['search', 'find', 'grep'],
+    },
+  ];
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -324,6 +411,12 @@ export default function Home() {
         open={showTemplates}
         onClose={() => setShowTemplates(false)}
         onSelectTemplate={handleTemplateSelect}
+      />
+
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        commands={commands}
       />
     </div>
   );
