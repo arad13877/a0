@@ -1,4 +1,4 @@
-import { Code2, Settings, Download, Sun, Moon, ImagePlus, Search } from "lucide-react";
+import { Code2, Settings, Download, ImagePlus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -26,18 +26,11 @@ export default function Header({
   onSettings,
   onDownload,
 }: HeaderProps) {
-  const [isDark, setIsDark] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysis, setAnalysis] = useState<ProjectAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
-    console.log("Theme toggled:", !isDark ? "dark" : "light");
-  };
 
   const handleBackgroundUpload = () => {
     fileInputRef.current?.click();
@@ -188,13 +181,6 @@ export default function Header({
           className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
         >
           <Download className="w-5 h-5" />
-        </button>
-        <button
-          onClick={toggleTheme}
-          data-testid="button-theme-toggle"
-          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
-        >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         <button
           onClick={onSettings}

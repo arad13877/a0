@@ -19,6 +19,8 @@ function Router() {
 
 function App() {
   useEffect(() => {
+    document.documentElement.classList.add('dark');
+    
     const customBackground = localStorage.getItem('customBackground');
     if (customBackground) {
       document.body.style.backgroundImage = `url(${customBackground})`;

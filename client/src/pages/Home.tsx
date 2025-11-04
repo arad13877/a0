@@ -8,7 +8,6 @@ import PreviewPanel from "@/components/PreviewPanel";
 import TemplatesModal from "@/components/TemplatesModal";
 import FigmaUpload from "@/components/FigmaUpload";
 import SearchDialog from "@/components/SearchDialog";
-import WelcomeScreen from "@/components/WelcomeScreen";
 import { CommandPalette, useCommandPalette } from "@/components/CommandPalette";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Code, Image, PanelRightClose, PanelRight, Download, Play, FileText, Search } from "lucide-react";
@@ -33,10 +32,6 @@ export default function Home() {
   const [showPreview, setShowPreview] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(() => {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-    return !hasSeenWelcome;
-  });
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const { toast } = useToast();
@@ -435,19 +430,6 @@ export default function Home() {
           setSelectedFile(fileId);
           setActiveTab(fileId);
           setViewMode("editor");
-        }}
-      />
-
-      <WelcomeScreen
-        open={showWelcome}
-        onClose={() => {
-          setShowWelcome(false);
-          localStorage.setItem('hasSeenWelcome', 'true');
-        }}
-        onGetStarted={() => {
-          setShowWelcome(false);
-          localStorage.setItem('hasSeenWelcome', 'true');
-          setViewMode('chat');
         }}
       />
     </div>

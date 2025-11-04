@@ -44,3 +44,12 @@
    ✓ Applied to navigation buttons area (Chat, Editor, Figma)
    ✓ Scrollbar now completely hidden while maintaining scroll functionality
    ✓ Workflow restarted successfully
+[x] 20. Force dark mode permanently and remove welcome screen - ✓ Completed
+   ✓ Removed light mode theme toggle button from Header
+   ✓ Removed Sun and Moon icons from imports
+   ✓ Added permanent dark class to documentElement in App.tsx
+   ✓ Removed WelcomeScreen component from Home.tsx
+   ✓ Removed showWelcome state and related localStorage logic
+   ✓ Application now always runs in dark mode
+   ✓ Welcome dialog no longer appears on first visit
+   ✓ Workflow restarted successfully
