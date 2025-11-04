@@ -10,6 +10,15 @@ import FigmaUpload from "@/components/FigmaUpload";
 import SearchDialog from "@/components/SearchDialog";
 import { CommandPalette, useCommandPalette } from "@/components/CommandPalette";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MessageSquare, Code, Image, PanelRightClose, PanelRight, Download, Play, FileText, Search } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Project, File as ProjectFile, Message } from "@shared/schema";
@@ -32,6 +41,9 @@ export default function Home() {
   const [showPreview, setShowPreview] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showNewFileDialog, setShowNewFileDialog] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const { toast } = useToast();
@@ -109,6 +121,39 @@ export default function Home() {
     },
   });
 
+  const createFileMutation = useMutation({
+    mutationFn: async (data: { name: string; path: string; type: string }) => {
+      const res = await apiRequest("POST", "/api/files", {
+        projectId: currentProject?.id,
+        name: data.name,
+        path: data.path,
+        content: "",
+        type: data.type,
+      });
+      return await res.json();
+    },
+    onSuccess: (newFile) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", currentProject?.id, "files"],
+      });
+      if (newFile.type === "file") {
+        setActiveTab(newFile.id);
+        setViewMode("editor");
+      }
+      toast({
+        title: "Success",
+        description: `${newFile.type === "folder" ? "Folder" : "File"} "${newFile.name}" created successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: `Failed to create ${isCreatingFolder ? "folder" : "file"}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (!currentProject && projects && projects.length === 0) {
       createProjectMutation.mutate({ name: "my-project" });
@@ -136,11 +181,12 @@ export default function Home() {
         currentPath = currentPath ? `${currentPath}/${part}` : part;
 
         if (!pathMap.has(currentPath)) {
+          const nodeType = isLast ? file.type : "folder";
           const node: FileNode = {
             id: isLast ? file.id.toString() : currentPath,
             name: part,
-            type: isLast ? "file" : "folder",
-            children: isLast ? undefined : [],
+            type: nodeType as "file" | "folder",
+            children: nodeType === "folder" ? [] : undefined,
           };
 
           pathMap.set(currentPath, node);
@@ -151,7 +197,9 @@ export default function Home() {
             const parentPath = parts.slice(0, index).join("/");
             const parent = pathMap.get(parentPath);
             if (parent && parent.children) {
-              parent.children.push(node);
+              if (!parent.children.find(child => child.id === node.id)) {
+                parent.children.push(node);
+              }
             }
           }
         }
@@ -221,6 +269,33 @@ export default function Home() {
       title: "Saved",
       description: "All files saved successfully",
     });
+  };
+
+  const handleCreateFile = () => {
+    if (!currentProject) {
+      toast({
+        title: "Error",
+        description: "No project selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newFileName.trim()) {
+      toast({
+        title: "Error",
+        description: `${isCreatingFolder ? "Folder" : "File"} name cannot be empty`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const type = isCreatingFolder ? "folder" : "file";
+    const path = `src/${newFileName}`;
+    createFileMutation.mutate({ name: newFileName, path, type });
+    setNewFileName("");
+    setShowNewFileDialog(false);
+    setIsCreatingFolder(false);
   };
 
   useKeyboardShortcuts([
@@ -311,8 +386,14 @@ export default function Home() {
               setActiveTab(fileId);
               setViewMode("editor");
             }}
-            onNewFile={() => console.log("New file")}
-            onNewFolder={() => console.log("New folder")}
+            onNewFile={() => {
+              setIsCreatingFolder(false);
+              setShowNewFileDialog(true);
+            }}
+            onNewFolder={() => {
+              setIsCreatingFolder(true);
+              setShowNewFileDialog(true);
+            }}
           />
         </div>
 
@@ -432,6 +513,64 @@ export default function Home() {
           setViewMode("editor");
         }}
       />
+
+      <Dialog open={showNewFileDialog} onOpenChange={(open) => {
+        setShowNewFileDialog(open);
+        if (!open) {
+          setNewFileName("");
+          setIsCreatingFolder(false);
+        }
+      }}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-800 dark:text-white">
+              {isCreatingFolder ? "Create New Folder" : "Create New File"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fileName" className="text-gray-700 dark:text-gray-300">
+                {isCreatingFolder ? "Folder Name" : "File Name"}
+              </Label>
+              <Input
+                id="fileName"
+                data-testid="input-file-name"
+                placeholder={isCreatingFolder ? "e.g. components or utils" : "e.g. App.tsx or styles.css"}
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateFile();
+                  }
+                }}
+                className="glass-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowNewFileDialog(false);
+                setNewFileName("");
+                setIsCreatingFolder(false);
+              }}
+              data-testid="button-cancel-file"
+              className="glass-button"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateFile}
+              disabled={createFileMutation.isPending}
+              data-testid="button-create-file"
+              className="glass-button"
+            >
+              {createFileMutation.isPending ? "Creating..." : `Create ${isCreatingFolder ? "Folder" : "File"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

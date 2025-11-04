@@ -4,9 +4,13 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 let genAI: GoogleGenAI | null = null;
 
+export function isAIAvailable(): boolean {
+  return !!apiKey;
+}
+
 function getGenAI(): GoogleGenAI {
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is required. Please set it in your Secrets.");
+    throw new Error("AI_SERVICE_UNAVAILABLE: GEMINI_API_KEY is not configured. Please add it to your environment secrets.");
   }
   
   if (!genAI) {

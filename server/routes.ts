@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateCode, chatWithAI, analyzeDesign, generateTests } from "./gemini";
+import { generateCode, chatWithAI, analyzeDesign, generateTests, isAIAvailable } from "./gemini";
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
 import { registerGitRoutes } from "./git";
 
@@ -39,13 +39,22 @@ function handleApiError(error: unknown, res: Response, defaultMessage: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.get("/api/ai/status", (_req: Request, res: Response) => {
+    res.json({ 
+      available: isAIAvailable(),
+      message: isAIAvailable() 
+        ? "AI service is available" 
+        : "AI service is unavailable. Please configure GEMINI_API_KEY in environment secrets."
+    });
+  });
+
   app.post("/api/projects", async (req: Request, res: Response) => {
     try {
       const data = insertProjectSchema.parse(req.body);
       const project = await storage.createProject(data);
       res.json(project);
     } catch (error) {
-      res.status(400).json({ error: "Invalid project data" });
+      handleApiError(error, res, "Failed to create project");
     }
   });
 
@@ -54,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projects = await storage.getAllProjects();
       res.json(projects);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch projects" });
+      handleApiError(error, res, "Failed to fetch projects");
     }
   });
 
@@ -67,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(project);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch project" });
+      handleApiError(error, res, "Failed to fetch project");
     }
   });
 
@@ -80,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete project" });
+      handleApiError(error, res, "Failed to delete project");
     }
   });
 
@@ -90,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const file = await storage.createFile(data);
       res.json(file);
     } catch (error) {
-      res.status(400).json({ error: "Invalid file data" });
+      handleApiError(error, res, "Failed to create file");
     }
   });
 
@@ -100,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const files = await storage.getFilesByProject(projectId);
       res.json(files);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch files" });
+      handleApiError(error, res, "Failed to fetch files");
     }
   });
 
@@ -114,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(file);
     } catch (error) {
-      res.status(500).json({ error: "Failed to update file" });
+      handleApiError(error, res, "Failed to update file");
     }
   });
 
@@ -127,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete file" });
+      handleApiError(error, res, "Failed to delete file");
     }
   });
 
@@ -137,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messages = await storage.getMessagesByProject(projectId);
       res.json(messages);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch messages" });
+      handleApiError(error, res, "Failed to fetch messages");
     }
   });
 
@@ -338,8 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(analysis);
     } catch (error) {
-      console.error("Project analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze project" });
+      handleApiError(error, res, "Failed to analyze project");
     }
   });
 
@@ -393,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tests = await storage.getTestsByFile(fileId);
       res.json(tests);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch tests" });
+      handleApiError(error, res, "Failed to fetch tests");
     }
   });
 
@@ -403,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const versions = await storage.getFileVersions(fileId);
       res.json(versions);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch file versions" });
+      handleApiError(error, res, "Failed to fetch file versions");
     }
   });
 
@@ -419,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(restoredFile);
     } catch (error) {
-      res.status(500).json({ error: "Failed to restore file version" });
+      handleApiError(error, res, "Failed to restore file version");
     }
   });
 
