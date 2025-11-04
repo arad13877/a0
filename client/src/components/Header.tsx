@@ -1,6 +1,7 @@
-import { Code2, Settings, Download, Sun, Moon } from "lucide-react";
+import { Code2, Settings, Download, Sun, Moon, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   projectName?: string;
@@ -16,11 +17,65 @@ export default function Header({
   onDownload,
 }: HeaderProps) {
   const [isDark, setIsDark] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
     console.log("Theme toggled:", !isDark ? "dark" : "light");
+  };
+
+  const handleBackgroundUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "خطا",
+        description: "لطفاً یک فایل تصویری انتخاب کنید",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "خطا",
+        description: "حجم فایل باید کمتر از 5 مگابایت باشد",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      localStorage.setItem('customBackground', result);
+      document.body.style.backgroundImage = `url(${result})`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundAttachment = 'fixed';
+      
+      toast({
+        title: "موفق",
+        description: "پس‌زمینه با موفقیت تنظیم شد",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const resetBackground = () => {
+    localStorage.removeItem('customBackground');
+    document.body.style.backgroundImage = '';
+    toast({
+      title: "بازیابی",
+      description: "پس‌زمینه به حالت پیش‌فرض برگشت",
+    });
   };
 
   return (
@@ -45,6 +100,22 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+          data-testid="input-background"
+        />
+        <button
+          onClick={handleBackgroundUpload}
+          data-testid="button-background-upload"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-800 dark:text-white transition-all"
+          title="تنظیم پس‌زمینه"
+        >
+          <ImagePlus className="w-5 h-5" />
+        </button>
         <button
           onClick={onDownload}
           data-testid="button-download"
