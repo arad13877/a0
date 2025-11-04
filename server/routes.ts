@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateCode, chatWithAI, analyzeDesign } from "./gemini";
-import { insertProjectSchema, insertFileSchema, insertMessageSchema } from "@shared/schema";
+import { insertProjectSchema, insertFileSchema, insertMessageSchema, type ProjectAnalysis } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req: Request, res: Response) => {
@@ -188,6 +188,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Design analysis error:", error);
       res.status(500).json({ error: "Failed to analyze design" });
+    }
+  });
+
+  app.post("/api/analyze-project", async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.body;
+
+      if (!projectId) {
+        return res.status(400).json({ error: "Missing projectId" });
+      }
+
+      const files = await storage.getFilesByProject(projectId);
+      
+      const analysis: ProjectAnalysis = {
+        framework: "Unknown",
+        language: "Unknown",
+        styling: [],
+        libraries: [],
+        patterns: {
+          componentStyle: "Not detected",
+          stateManagement: "Not detected",
+          routing: "Not detected",
+        },
+        fileStructure: {
+          totalFiles: files.length,
+          directories: [],
+        },
+        recommendations: [],
+      };
+
+      const allContent = files.map(f => f.content).join("\n");
+      const allPaths = files.map(f => f.path);
+      const uniqueDirs = new Set(allPaths.map(p => p.split("/").slice(0, -1).join("/")).filter(Boolean));
+      analysis.fileStructure.directories = Array.from(uniqueDirs);
+
+      if (allContent.includes("import React") || allContent.includes("from 'react'") || allContent.includes("from \"react\"")) {
+        analysis.framework = "React";
+        analysis.language = "JavaScript/TypeScript";
+      }
+
+      if (allContent.includes("from 'next") || allContent.includes("from \"next")) {
+        analysis.framework = "Next.js";
+      }
+
+      if (allContent.includes("from 'vue") || allContent.includes("from \"vue")) {
+        analysis.framework = "Vue";
+      }
+
+      if (allContent.includes("interface ") || allContent.includes("type ") || files.some(f => f.name.endsWith(".ts") || f.name.endsWith(".tsx"))) {
+        analysis.language = "TypeScript";
+      }
+
+      if (allContent.includes("tailwind") || allContent.includes("className=")) {
+        analysis.styling.push("Tailwind CSS");
+      }
+
+      if (allContent.includes("styled-components") || allContent.includes("styled.")) {
+        analysis.styling.push("Styled Components");
+      }
+
+      if (allContent.includes("@emotion")) {
+        analysis.styling.push("Emotion");
+      }
+
+      if (allContent.includes("useState") || allContent.includes("useEffect")) {
+        analysis.patterns.stateManagement = "React Hooks";
+      }
+
+      if (allContent.includes("useQuery") || allContent.includes("@tanstack/react-query")) {
+        analysis.libraries.push("TanStack Query");
+        analysis.patterns.stateManagement = "React Hooks + TanStack Query";
+      }
+
+      if (allContent.includes("wouter") || allContent.includes("react-router")) {
+        analysis.patterns.routing = allContent.includes("wouter") ? "Wouter" : "React Router";
+        analysis.libraries.push(allContent.includes("wouter") ? "Wouter" : "React Router");
+      }
+
+      if (allContent.includes("const ") && allContent.includes("= () =>")) {
+        analysis.patterns.componentStyle = "Arrow Function Components";
+      } else if (allContent.includes("function ") && allContent.includes("Component")) {
+        analysis.patterns.componentStyle = "Function Declaration Components";
+      }
+
+      if (allContent.includes("shadcn") || allContent.includes("@/components/ui/")) {
+        analysis.libraries.push("shadcn/ui");
+      }
+
+      if (allContent.includes("framer-motion")) {
+        analysis.libraries.push("Framer Motion");
+      }
+
+      if (allContent.includes("lucide-react")) {
+        analysis.libraries.push("Lucide Icons");
+      }
+
+      if (analysis.framework === "React" || analysis.framework === "Next.js") {
+        analysis.recommendations.push("Continue using " + analysis.framework + " for consistency");
+      }
+
+      if (analysis.patterns.componentStyle === "Arrow Function Components") {
+        analysis.recommendations.push("Maintain arrow function style: const Component = () => { ... }");
+      }
+
+      if (analysis.styling.includes("Tailwind CSS")) {
+        analysis.recommendations.push("Use Tailwind CSS utility classes for styling");
+      }
+
+      if (analysis.libraries.includes("shadcn/ui")) {
+        analysis.recommendations.push("Leverage existing shadcn/ui components instead of building from scratch");
+      }
+
+      if (files.length === 0) {
+        analysis.recommendations.push("Start by generating some components to establish project patterns");
+      }
+
+      res.json(analysis);
+    } catch (error) {
+      console.error("Project analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze project" });
     }
   });
 
