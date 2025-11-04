@@ -202,6 +202,7 @@ export default function Home() {
     <div className="h-screen flex flex-col overflow-hidden">
       <Header
         projectName={currentProject?.name || "Untitled Project"}
+        projectId={currentProject?.id}
         onNewProject={() => setShowTemplates(true)}
         onSettings={() => console.log("Settings")}
         onDownload={handleDownload}
