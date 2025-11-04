@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateCode, chatWithAI, analyzeDesign } from "./gemini";
-import { insertProjectSchema, insertFileSchema, insertMessageSchema, type ProjectAnalysis } from "@shared/schema";
+import { generateCode, chatWithAI, analyzeDesign, generateTests } from "./gemini";
+import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req: Request, res: Response) => {
@@ -309,6 +309,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Project analysis error:", error);
       res.status(500).json({ error: "Failed to analyze project" });
+    }
+  });
+
+  app.post("/api/files/:fileId/generate-tests", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const testCode = await generateTests({
+        fileName: file.name,
+        fileContent: file.content,
+        framework: "React",
+      });
+
+      const testFileName = file.name.replace(/\.(tsx?|jsx?)$/, ".test.$1");
+      const testFile = await storage.createFile({
+        projectId: file.projectId,
+        name: testFileName,
+        path: file.path.replace(/\.(tsx?|jsx?)$/, ".test.$1"),
+        content: testCode,
+        type: "test",
+      });
+
+      await storage.createTest({
+        fileId: file.id,
+        name: testFileName,
+        content: testCode,
+        status: "pending",
+      });
+
+      res.json({ testFile, testCode });
+    } catch (error) {
+      console.error("Test generation error:", error);
+      res.status(500).json({ error: "Failed to generate tests" });
+    }
+  });
+
+  app.get("/api/files/:fileId/tests", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const tests = await storage.getTestsByFile(fileId);
+      res.json(tests);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tests" });
+    }
+  });
+
+  app.get("/api/files/:fileId/versions", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const versions = await storage.getFileVersions(fileId);
+      res.json(versions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch file versions" });
+    }
+  });
+
+  app.post("/api/files/:fileId/restore/:versionId", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const versionId = parseInt(req.params.versionId);
+      const restoredFile = await storage.restoreFileVersion(fileId, versionId);
+      
+      if (!restoredFile) {
+        return res.status(404).json({ error: "File or version not found" });
+      }
+      
+      res.json(restoredFile);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to restore file version" });
     }
   });
 

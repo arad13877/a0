@@ -4,7 +4,11 @@ import {
   type File,
   type InsertFile,
   type Message,
-  type InsertMessage
+  type InsertMessage,
+  type FileVersion,
+  type InsertFileVersion,
+  type Test,
+  type InsertTest
 } from "@shared/schema";
 
 export interface IStorage {
@@ -23,23 +27,40 @@ export interface IStorage {
   createMessage(message: InsertMessage): Promise<Message>;
   getMessagesByProject(projectId: number): Promise<Message[]>;
   deleteMessagesByProject(projectId: number): Promise<boolean>;
+
+  createFileVersion(version: InsertFileVersion): Promise<FileVersion>;
+  getFileVersions(fileId: number): Promise<FileVersion[]>;
+  restoreFileVersion(fileId: number, versionId: number): Promise<File | undefined>;
+
+  createTest(test: InsertTest): Promise<Test>;
+  getTestsByFile(fileId: number): Promise<Test[]>;
+  updateTest(id: number, updates: Partial<InsertTest>): Promise<Test | undefined>;
+  deleteTest(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private projects: Map<number, Project>;
   private files: Map<number, File>;
   private messages: Map<number, Message>;
+  private fileVersions: Map<number, FileVersion>;
+  private tests: Map<number, Test>;
   private projectIdCounter: number;
   private fileIdCounter: number;
   private messageIdCounter: number;
+  private versionIdCounter: number;
+  private testIdCounter: number;
 
   constructor() {
     this.projects = new Map();
     this.files = new Map();
     this.messages = new Map();
+    this.fileVersions = new Map();
+    this.tests = new Map();
     this.projectIdCounter = 1;
     this.fileIdCounter = 1;
     this.messageIdCounter = 1;
+    this.versionIdCounter = 1;
+    this.testIdCounter = 1;
   }
 
   async createProject(insertProject: InsertProject): Promise<Project> {
@@ -114,6 +135,19 @@ export class MemStorage implements IStorage {
     const file = this.files.get(id);
     if (!file) return undefined;
 
+    const versions = Array.from(this.fileVersions.values()).filter(v => v.fileId === id);
+    const nextVersion = versions.length + 1;
+    
+    const versionId = this.versionIdCounter++;
+    const version: FileVersion = {
+      id: versionId,
+      fileId: id,
+      content: file.content,
+      version: nextVersion,
+      createdAt: new Date(),
+    };
+    this.fileVersions.set(versionId, version);
+
     const updated = { ...file, content, updatedAt: new Date() };
     this.files.set(id, updated);
     return updated;
@@ -147,6 +181,64 @@ export class MemStorage implements IStorage {
     );
     messagesToDelete.forEach((m) => this.messages.delete(m.id));
     return true;
+  }
+
+  async createFileVersion(insertVersion: InsertFileVersion): Promise<FileVersion> {
+    const id = this.versionIdCounter++;
+    const version: FileVersion = {
+      ...insertVersion,
+      id,
+      createdAt: new Date(),
+    };
+    this.fileVersions.set(id, version);
+    return version;
+  }
+
+  async getFileVersions(fileId: number): Promise<FileVersion[]> {
+    return Array.from(this.fileVersions.values())
+      .filter(v => v.fileId === fileId)
+      .sort((a, b) => b.version - a.version);
+  }
+
+  async restoreFileVersion(fileId: number, versionId: number): Promise<File | undefined> {
+    const file = this.files.get(fileId);
+    const version = this.fileVersions.get(versionId);
+    
+    if (!file || !version || version.fileId !== fileId) return undefined;
+
+    const updated = { ...file, content: version.content, updatedAt: new Date() };
+    this.files.set(fileId, updated);
+    return updated;
+  }
+
+  async createTest(insertTest: InsertTest): Promise<Test> {
+    const id = this.testIdCounter++;
+    const test: Test = {
+      ...insertTest,
+      id,
+      result: insertTest.result || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.tests.set(id, test);
+    return test;
+  }
+
+  async getTestsByFile(fileId: number): Promise<Test[]> {
+    return Array.from(this.tests.values()).filter(t => t.fileId === fileId);
+  }
+
+  async updateTest(id: number, updates: Partial<InsertTest>): Promise<Test | undefined> {
+    const test = this.tests.get(id);
+    if (!test) return undefined;
+
+    const updated = { ...test, ...updates, updatedAt: new Date() };
+    this.tests.set(id, updated);
+    return updated;
+  }
+
+  async deleteTest(id: number): Promise<boolean> {
+    return this.tests.delete(id);
   }
 }
 

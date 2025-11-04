@@ -26,6 +26,12 @@ export interface CodeGenerationResponse {
   explanation: string;
 }
 
+export interface TestGenerationRequest {
+  fileName: string;
+  fileContent: string;
+  framework?: string;
+}
+
 const SYSTEM_PROMPT = `You are a senior UI/UX engineer and full-stack developer with 10+ years of experience, specializing in creating beautiful, accessible, and user-friendly web applications. You follow best practices from leading design systems like Material Design, Radix UI, shadcn/ui, and Untitled UI.
 
 ## Core Competencies:
@@ -1017,5 +1023,69 @@ export async function chatWithAI(
     console.error("Chat error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     throw new Error(`Failed to get response: ${errorMessage}. Please try again.`);
+  }
+}
+
+export async function generateTests(request: TestGenerationRequest): Promise<string> {
+  try {
+    const { fileName, fileContent, framework = "React" } = request;
+    
+    const prompt = `You are an expert in automated testing. Generate comprehensive Vitest/Jest unit tests for the following ${framework} component/code.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`typescript
+${fileContent}
+\`\`\`
+
+**Requirements**:
+1. Use Vitest syntax (similar to Jest)
+2. Test all major functionality and edge cases
+3. Use React Testing Library for React components
+4. Include tests for:
+   - Component rendering
+   - User interactions (clicks, input changes)
+   - Props validation
+   - State changes
+   - Error handling
+5. Use proper test structure (describe, it/test, expect)
+6. Add helpful test descriptions
+7. Mock any external dependencies
+8. Use data-testid attributes for selecting elements
+9. Aim for high test coverage
+
+**Output Format**:
+Return ONLY the test code, no explanations. The code should be ready to run.`;
+
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      config: {
+        temperature: 0.3,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: 4096,
+      },
+    });
+
+    let testCode = result.text || "";
+    
+    testCode = testCode.replace(/```typescript\n?/g, "").replace(/```tsx\n?/g, "").replace(/```javascript\n?/g, "").replace(/```\n?/g, "");
+    
+    if (!testCode.includes("describe") && !testCode.includes("test") && !testCode.includes("it")) {
+      throw new Error("Generated code doesn't appear to be valid test code");
+    }
+
+    return testCode;
+  } catch (error) {
+    console.error("Test generation error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    throw new Error(`Failed to generate tests: ${errorMessage}`);
   }
 }

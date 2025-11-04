@@ -160,6 +160,7 @@ export default function Home() {
     id: file.id.toString(),
     name: file.name,
     content: file.content,
+    fileId: file.id,
   }));
 
   const chatMessages = messages.map((msg) => ({

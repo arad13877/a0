@@ -1,12 +1,17 @@
 import Editor from "@monaco-editor/react";
-import { X, Save } from "lucide-react";
+import { X, Save, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import VersionHistory from "./VersionHistory";
 
 interface Tab {
   id: string;
   name: string;
   content: string;
+  fileId?: number;
 }
 
 interface CodeEditorProps {
@@ -47,6 +52,7 @@ export default function CodeEditor({
   const activeTabData = tabs.find((t) => t.id === activeTab);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [currentContent, setCurrentContent] = useState(activeTabData?.content || "");
+  const { toast } = useToast();
 
   useEffect(() => {
     setCurrentContent(activeTabData?.content || "");
@@ -66,6 +72,35 @@ export default function CodeEditor({
       setHasUnsavedChanges(false);
     }
   };
+
+  const generateTestsMutation = useMutation({
+    mutationFn: async (fileId: number) => {
+      const res = await apiRequest("POST", `/api/files/${fileId}/generate-tests`, {});
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/files"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      toast({
+        title: "Tests generated",
+        description: "Test file has been created successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to generate tests",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const canGenerateTests = activeTabData && 
+    (activeTabData.name.endsWith('.tsx') || 
+     activeTabData.name.endsWith('.jsx') || 
+     activeTabData.name.endsWith('.ts') || 
+     activeTabData.name.endsWith('.js')) &&
+    !activeTabData.name.includes('.test.');
 
   const language = activeTabData ? getLanguageFromFileName(activeTabData.name) : 'typescript';
 
@@ -118,19 +153,37 @@ export default function CodeEditor({
               }}
             />
           </div>
-          <div className="h-8 border-t px-4 flex items-center justify-between text-xs text-muted-foreground">
-            <span data-testid="status-file">{activeTabData?.name || ""}</span>
+          <div className="h-8 border-t px-4 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <span data-testid="status-language">{language}</span>
+              <span className="text-muted-foreground" data-testid="status-file">{activeTabData?.name || ""}</span>
+              {activeTabData?.fileId && (
+                <VersionHistory fileId={activeTabData.fileId} currentContent={currentContent} />
+              )}
+              {canGenerateTests && activeTabData?.fileId && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 gap-1"
+                  onClick={() => generateTestsMutation.mutate(activeTabData.fileId!)}
+                  disabled={generateTestsMutation.isPending}
+                  data-testid="button-generate-tests"
+                >
+                  <FlaskConical className="w-3 h-3" />
+                  Generate Tests
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground" data-testid="status-language">{language}</span>
               {hasUnsavedChanges && (
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-xs"
+                  className="h-6 px-2 gap-1"
                   onClick={handleSave}
                   data-testid="button-save"
                 >
-                  <Save className="w-3 h-3 mr-1" />
+                  <Save className="w-3 h-3" />
                   Save
                 </Button>
               )}
