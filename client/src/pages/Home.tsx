@@ -199,7 +199,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Header
         projectName={currentProject?.name || "Untitled Project"}
         onNewProject={() => setShowTemplates(true)}
@@ -207,69 +207,79 @@ export default function Home() {
         onDownload={handleDownload}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        <FileExplorer
-          files={fileTree}
-          selectedFile={selectedFile?.toString()}
-          onFileSelect={(id) => {
-            const fileId = parseInt(id);
-            setSelectedFile(fileId);
-            setActiveTab(fileId);
-            setViewMode("editor");
-          }}
-          onNewFile={() => console.log("New file")}
-          onNewFolder={() => console.log("New folder")}
-        />
+      <div className="flex-1 flex overflow-hidden p-4 gap-4">
+        <div className="glass-sidebar rounded-2xl overflow-hidden">
+          <FileExplorer
+            files={fileTree}
+            selectedFile={selectedFile?.toString()}
+            onFileSelect={(id) => {
+              const fileId = parseInt(id);
+              setSelectedFile(fileId);
+              setActiveTab(fileId);
+              setViewMode("editor");
+            }}
+            onNewFile={() => console.log("New file")}
+            onNewFolder={() => console.log("New folder")}
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col">
-          <div className="h-10 border-b flex items-center justify-between px-3">
-            <div className="flex items-center gap-1">
-              <Button
-                size="sm"
-                variant={viewMode === "chat" ? "secondary" : "ghost"}
+        <div className="flex-1 flex flex-col glass-float rounded-2xl overflow-hidden">
+          <div className="glass-nav h-12 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <button
                 onClick={() => setViewMode("chat")}
                 data-testid="button-view-chat"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === "chat"
+                    ? "glass-card text-white"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
               >
-                <MessageSquare className="w-4 h-4 mr-2" />
+                <MessageSquare className="w-4 h-4 inline mr-2" />
                 Chat
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === "editor" ? "secondary" : "ghost"}
+              </button>
+              <button
                 onClick={() => setViewMode("editor")}
                 data-testid="button-view-editor"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === "editor"
+                    ? "glass-card text-white"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
               >
-                <Code className="w-4 h-4 mr-2" />
+                <Code className="w-4 h-4 inline mr-2" />
                 Editor
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === "figma" ? "secondary" : "ghost"}
+              </button>
+              <button
                 onClick={() => setViewMode("figma")}
                 data-testid="button-view-figma"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === "figma"
+                    ? "glass-card text-white"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
               >
-                <Image className="w-4 h-4 mr-2" />
+                <Image className="w-4 h-4 inline mr-2" />
                 Figma Import
-              </Button>
+              </button>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
+            <button
               onClick={() => setShowPreview(!showPreview)}
               data-testid="button-toggle-preview"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
             >
               {showPreview ? (
                 <>
-                  <PanelRightClose className="w-4 h-4 mr-2" />
+                  <PanelRightClose className="w-4 h-4 inline mr-2" />
                   Hide Preview
                 </>
               ) : (
                 <>
-                  <PanelRight className="w-4 h-4 mr-2" />
+                  <PanelRight className="w-4 h-4 inline mr-2" />
                   Show Preview
                 </>
               )}
-            </Button>
+            </button>
           </div>
 
           <div className="flex-1 overflow-hidden">
@@ -301,7 +311,7 @@ export default function Home() {
         </div>
 
         {showPreview && (
-          <div className="w-1/2">
+          <div className="w-1/2 glass-float rounded-2xl overflow-hidden">
             <PreviewPanel files={files} onClose={() => setShowPreview(false)} />
           </div>
         )}

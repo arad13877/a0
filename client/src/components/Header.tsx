@@ -24,47 +24,48 @@ export default function Header({
   };
 
   return (
-    <header className="h-14 border-b bg-background flex items-center justify-between px-4 gap-4">
+    <header className="h-16 glass-nav flex items-center justify-between px-6 gap-4 sticky top-0 z-50">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Code2 className="w-6 h-6 text-primary" data-testid="logo-icon" />
-          <span className="text-lg font-bold" data-testid="brand-name">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl glass-float flex items-center justify-center">
+            <Code2 className="w-5 h-5 text-white drop-shadow-lg" data-testid="logo-icon" />
+          </div>
+          <span className="text-xl font-bold text-white drop-shadow-md gradient-text" data-testid="brand-name">
             AI Code Agent
           </span>
         </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-sm font-mono text-muted-foreground truncate max-w-xs" data-testid="project-name">
-          {projectName}
+        <div className="glass-card px-4 py-2 rounded-full">
+          <div className="text-sm font-mono text-white truncate max-w-xs" data-testid="project-name">
+            {projectName}
+          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
+        <button
           onClick={onDownload}
           data-testid="button-download"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
         >
-          <Download className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
+          <Download className="w-5 h-5" />
+        </button>
+        <button
           onClick={toggleTheme}
           data-testid="button-theme-toggle"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
         >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+        <button
           onClick={onSettings}
           data-testid="button-settings"
+          className="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white hover:text-white transition-all"
         >
-          <Settings className="w-4 h-4" />
-        </Button>
+          <Settings className="w-5 h-5" />
+        </button>
       </div>
     </header>
   );

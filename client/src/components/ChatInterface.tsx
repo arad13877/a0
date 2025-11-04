@@ -41,11 +41,13 @@ export default function ChatInterface({
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <Bot className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2" data-testid="empty-state-title">
+            <div className="glass-card w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+              <Bot className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white" data-testid="empty-state-title">
               Start a conversation
             </h3>
-            <p className="text-sm text-muted-foreground max-w-md" data-testid="empty-state-description">
+            <p className="text-sm text-white/70 max-w-md" data-testid="empty-state-description">
               Ask me to create components, pages, or entire applications. I
               specialize in React, Next.js, Tailwind, and modern web
               development.
@@ -61,24 +63,24 @@ export default function ChatInterface({
               data-testid={`message-${message.role}-${message.id}`}
             >
               {message.role === "assistant" && (
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-primary-foreground" />
+                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-5 h-5 text-white" />
                 </div>
               )}
               <div
-                className={`flex-1 px-4 py-2.5 rounded-2xl ${
+                className={`flex-1 px-5 py-3 rounded-2xl ${
                   message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "glass-heavy text-white"
+                    : "glass-card text-white"
                 }`}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap font-vazirmatn">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
                   {message.content}
                 </p>
               </div>
               {message.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
                 </div>
               )}
             </div>
@@ -86,35 +88,34 @@ export default function ChatInterface({
         )}
         {isLoading && (
           <div className="flex gap-3 max-w-3xl mr-auto">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <Bot className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+              <Bot className="w-5 h-5 text-white" />
             </div>
-            <div className="flex-1 px-4 py-2.5 rounded-2xl bg-muted">
-              <Loader2 className="w-4 h-4 animate-spin" />
+            <div className="flex-1 px-5 py-3 rounded-2xl glass-card">
+              <Loader2 className="w-5 h-5 animate-spin text-white" />
             </div>
           </div>
         )}
       </div>
 
-      <div className="border-t p-4">
-        <div className="relative">
-          <Textarea
+      <div className="p-4">
+        <div className="relative glass-card rounded-2xl overflow-hidden">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me to create something..."
-            className="min-h-[120px] pr-12 resize-none font-vazirmatn"
+            className="w-full min-h-[120px] px-4 py-3 bg-transparent text-white placeholder:text-white/50 resize-none outline-none"
             data-testid="input-chat"
           />
-          <Button
-            size="icon"
+          <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="absolute bottom-3 right-3"
+            className="absolute bottom-3 right-3 glass-button w-10 h-10 rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="button-send"
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            <Send className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>
