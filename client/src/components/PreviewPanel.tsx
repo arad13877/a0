@@ -24,6 +24,21 @@ export default function PreviewPanel({ files = [], onClose }: PreviewPanelProps)
   const [key, setKey] = useState(0);
   const [consoleLogs, setConsoleLogs] = useState<Array<{type: string; message: string; timestamp: number}>>([]);
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'console') {
+        setConsoleLogs(prev => [...prev, {
+          type: event.data.level,
+          message: event.data.message,
+          timestamp: Date.now()
+        }]);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   const deviceWidths = {
     desktop: "100%",
     tablet: "768px",
@@ -46,9 +61,13 @@ export default function PreviewPanel({ files = [], onClose }: PreviewPanelProps)
 
   useEffect(() => {
     setKey((k) => k + 1);
+    setConsoleLogs([]);
   }, [previewHTML]);
 
-  const refresh = () => setKey((k) => k + 1);
+  const refresh = () => {
+    setKey((k) => k + 1);
+    setConsoleLogs([]);
+  };
 
   const takeScreenshot = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

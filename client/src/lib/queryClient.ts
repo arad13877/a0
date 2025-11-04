@@ -1,4 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
+import { getUserFriendlyError } from "./errorMessages";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -74,6 +76,14 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: false,
+      onError: (error) => {
+        const friendlyError = getUserFriendlyError(error);
+        toast({
+          variant: "destructive",
+          title: friendlyError.title,
+          description: friendlyError.message,
+        });
+      },
     },
   },
 });

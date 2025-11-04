@@ -7,6 +7,8 @@ import CodeEditor from "@/components/CodeEditor";
 import PreviewPanel from "@/components/PreviewPanel";
 import TemplatesModal from "@/components/TemplatesModal";
 import FigmaUpload from "@/components/FigmaUpload";
+import SearchDialog from "@/components/SearchDialog";
+import WelcomeScreen from "@/components/WelcomeScreen";
 import { CommandPalette, useCommandPalette } from "@/components/CommandPalette";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Code, Image, PanelRightClose, PanelRight, Download, Play, FileText, Search } from "lucide-react";
@@ -30,6 +32,11 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("chat");
   const [showPreview, setShowPreview] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    return !hasSeenWelcome;
+  });
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const { toast } = useToast();
@@ -227,6 +234,7 @@ export default function Home() {
     { key: 'p', ctrl: true, action: () => setShowPreview(!showPreview) },
     { key: 'b', ctrl: true, action: () => setViewMode('editor') },
     { key: 'e', ctrl: true, shift: true, action: handleDownload },
+    { key: 'f', ctrl: true, action: () => setShowSearch(true) },
   ]);
 
   const commands = [
@@ -282,7 +290,7 @@ export default function Home() {
       label: 'Find in Files',
       icon: Search,
       shortcut: 'Ctrl+F',
-      action: () => console.log('Search not implemented yet'),
+      action: () => setShowSearch(true),
       keywords: ['search', 'find', 'grep'],
     },
   ];
@@ -297,8 +305,8 @@ export default function Home() {
         onDownload={handleDownload}
       />
 
-      <div className="flex-1 flex overflow-hidden p-4 gap-4">
-        <div className="glass-sidebar rounded-2xl overflow-hidden">
+      <div className="flex-1 flex overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
+        <div className="hidden lg:block glass-sidebar rounded-2xl overflow-hidden">
           <FileExplorer
             files={fileTree}
             selectedFile={selectedFile?.toString()}
@@ -313,60 +321,60 @@ export default function Home() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col glass-float rounded-2xl overflow-hidden">
-          <div className="glass-nav h-12 flex items-center justify-between px-4">
-            <div className="flex items-center gap-2">
+        <div className="flex-1 flex flex-col glass-float rounded-xl md:rounded-2xl overflow-hidden">
+          <div className="glass-nav h-12 flex items-center justify-between px-2 md:px-4">
+            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto">
               <button
                 onClick={() => setViewMode("chat")}
                 data-testid="button-view-chat"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                   viewMode === "chat"
                     ? "glass-card text-gray-800 dark:text-white"
                     : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
-                <MessageSquare className="w-4 h-4 inline mr-2" />
-                Chat
+                <MessageSquare className="w-4 h-4 inline mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Chat</span>
               </button>
               <button
                 onClick={() => setViewMode("editor")}
                 data-testid="button-view-editor"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                   viewMode === "editor"
                     ? "glass-card text-gray-800 dark:text-white"
                     : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
-                <Code className="w-4 h-4 inline mr-2" />
-                Editor
+                <Code className="w-4 h-4 inline mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Editor</span>
               </button>
               <button
                 onClick={() => setViewMode("figma")}
                 data-testid="button-view-figma"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                   viewMode === "figma"
                     ? "glass-card text-gray-800 dark:text-white"
                     : "text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
-                <Image className="w-4 h-4 inline mr-2" />
-                Figma Import
+                <Image className="w-4 h-4 inline mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Figma</span>
               </button>
             </div>
             <button
               onClick={() => setShowPreview(!showPreview)}
               data-testid="button-toggle-preview"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all"
+              className="hidden md:flex px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all"
             >
               {showPreview ? (
                 <>
                   <PanelRightClose className="w-4 h-4 inline mr-2" />
-                  Hide Preview
+                  <span className="hidden lg:inline">Hide Preview</span>
                 </>
               ) : (
                 <>
                   <PanelRight className="w-4 h-4 inline mr-2" />
-                  Show Preview
+                  <span className="hidden lg:inline">Show Preview</span>
                 </>
               )}
             </button>
@@ -401,7 +409,7 @@ export default function Home() {
         </div>
 
         {showPreview && (
-          <div className="w-1/2 glass-float rounded-2xl overflow-hidden">
+          <div className="hidden md:block md:w-1/2 glass-float rounded-2xl overflow-hidden">
             <PreviewPanel files={files} onClose={() => setShowPreview(false)} />
           </div>
         )}
@@ -417,6 +425,30 @@ export default function Home() {
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
         commands={commands}
+      />
+
+      <SearchDialog
+        open={showSearch}
+        onClose={() => setShowSearch(false)}
+        files={files}
+        onFileSelect={(fileId) => {
+          setSelectedFile(fileId);
+          setActiveTab(fileId);
+          setViewMode("editor");
+        }}
+      />
+
+      <WelcomeScreen
+        open={showWelcome}
+        onClose={() => {
+          setShowWelcome(false);
+          localStorage.setItem('hasSeenWelcome', 'true');
+        }}
+        onGetStarted={() => {
+          setShowWelcome(false);
+          localStorage.setItem('hasSeenWelcome', 'true');
+          setViewMode('chat');
+        }}
       />
     </div>
   );

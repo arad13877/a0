@@ -80,6 +80,50 @@ export function generatePreviewHTML(files: FileForPreview[]): string {
 </head>
 <body>
   <div id="root"></div>
+  <script>
+    // Capture console logs and send to parent
+    (function() {
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      console.log = function(...args) {
+        window.parent.postMessage({
+          type: 'console',
+          level: 'log',
+          message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+        }, '*');
+        originalLog.apply(console, args);
+      };
+      
+      console.error = function(...args) {
+        window.parent.postMessage({
+          type: 'console',
+          level: 'error',
+          message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+        }, '*');
+        originalError.apply(console, args);
+      };
+      
+      console.warn = function(...args) {
+        window.parent.postMessage({
+          type: 'console',
+          level: 'warn',
+          message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+        }, '*');
+        originalWarn.apply(console, args);
+      };
+      
+      // Catch errors
+      window.addEventListener('error', function(e) {
+        window.parent.postMessage({
+          type: 'console',
+          level: 'error',
+          message: \`\${e.message} at \${e.filename}:\${e.lineno}:\${e.colno}\`
+        }, '*');
+      });
+    })();
+  </script>
   <script type="text/babel" data-type="module">
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
