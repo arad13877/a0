@@ -1,11 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
-}
 
-const genAI = new GoogleGenAI({ apiKey });
+let genAI: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is required. Please set it in your Secrets.");
+  }
+  
+  if (!genAI) {
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  
+  return genAI;
+}
 
 export interface CodeGenerationRequest {
   prompt: string;
@@ -717,7 +726,7 @@ Now analyze and implement the following request step by step:\n\n`;
     }
 
     // Make the API call with optimized parameters
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
       model: "gemini-2.0-flash-exp",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
@@ -903,7 +912,7 @@ Provide a detailed, structured analysis following the framework above. Be specif
       },
     };
 
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
       model: "gemini-2.0-flash-exp",
       contents: [{ role: "user", parts: [{ text: prompt }, imagePart] }],
       config: {
@@ -990,7 +999,7 @@ export async function chatWithAI(
       parts: [{ text: message }],
     });
 
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
       model: "gemini-2.0-flash-exp",
       contents,
       config: {
@@ -1058,7 +1067,7 @@ ${fileContent}
 **Output Format**:
 Return ONLY the test code, no explanations. The code should be ready to run.`;
 
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
       model: "gemini-2.0-flash-exp",
       contents: [
         {
