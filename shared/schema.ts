@@ -26,6 +26,7 @@ export const messages = pgTable("messages", {
   projectId: integer("project_id").notNull(),
   role: text("role").notNull(),
   content: text("content").notNull(),
+  metadata: text("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -53,3 +54,30 @@ export type File = typeof files.$inferSelect;
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+
+export interface SolutionOption {
+  id: string;
+  title: string;
+  description: string;
+  pros: string[];
+  cons: string[];
+  code?: string;
+  complexity: "simple" | "moderate" | "advanced";
+}
+
+export interface ProjectAnalysis {
+  framework: string;
+  language: string;
+  styling: string[];
+  libraries: string[];
+  patterns: {
+    componentStyle: string;
+    stateManagement: string;
+    routing: string;
+  };
+  fileStructure: {
+    totalFiles: number;
+    directories: string[];
+  };
+  recommendations: string[];
+}
