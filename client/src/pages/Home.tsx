@@ -323,7 +323,7 @@ export default function Home() {
 
         <div className="flex-1 flex flex-col glass-float rounded-xl md:rounded-2xl overflow-hidden">
           <div className="glass-nav h-12 flex items-center justify-between px-2 md:px-4">
-            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto">
+            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto hide-scrollbar">
               <button
                 onClick={() => setViewMode("chat")}
                 data-testid="button-view-chat"
