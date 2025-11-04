@@ -5,6 +5,39 @@ import { generateCode, chatWithAI, analyzeDesign, generateTests } from "./gemini
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
 import { registerGitRoutes } from "./git";
 
+function handleApiError(error: unknown, res: Response, defaultMessage: string) {
+  console.error(defaultMessage, error);
+  
+  if (error instanceof Error) {
+    if (error.message.includes("GEMINI_API_KEY")) {
+      return res.status(503).json({ 
+        error: "AI service unavailable", 
+        details: "Please configure GEMINI_API_KEY in your environment secrets",
+        code: "AI_SERVICE_UNAVAILABLE"
+      });
+    }
+    
+    if (error.message.includes("validation") || error.message.includes("Invalid")) {
+      return res.status(400).json({ 
+        error: "Validation error", 
+        details: error.message,
+        code: "VALIDATION_ERROR"
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: defaultMessage, 
+      details: error.message,
+      code: "INTERNAL_ERROR"
+    });
+  }
+  
+  res.status(500).json({ 
+    error: defaultMessage,
+    code: "UNKNOWN_ERROR"
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", async (req: Request, res: Response) => {
     try {
@@ -139,8 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(assistantMessage);
     } catch (error) {
-      console.error("Chat error:", error);
-      res.status(500).json({ error: "Failed to process chat message" });
+      handleApiError(error, res, "Failed to process chat message");
     }
   });
 
@@ -172,8 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      console.error("Code generation error:", error);
-      res.status(500).json({ error: "Failed to generate code" });
+      handleApiError(error, res, "Failed to generate code");
     }
   });
 
@@ -188,8 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await analyzeDesign(imageData);
       res.json({ analysis });
     } catch (error) {
-      console.error("Design analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze design" });
+      handleApiError(error, res, "Failed to analyze design");
     }
   });
 
@@ -328,6 +358,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         framework: "React",
       });
 
+      if (!testCode || testCode.length < 50) {
+        return res.status(500).json({ 
+          error: "Generated test code is too short or empty",
+          code: "INVALID_TEST_CODE"
+        });
+      }
+
       const testFileName = file.name.replace(/\.(tsx?|jsx?)$/, ".test.$1");
       const testFile = await storage.createFile({
         projectId: file.projectId,
@@ -346,8 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ testFile, testCode });
     } catch (error) {
-      console.error("Test generation error:", error);
-      res.status(500).json({ error: "Failed to generate tests" });
+      handleApiError(error, res, "Failed to generate tests");
     }
   });
 

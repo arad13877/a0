@@ -28,6 +28,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     this.setState({ hasError: false, error: null });
+  };
+  
+  private handleReload = () => {
     window.location.reload();
   };
 
@@ -61,14 +64,24 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
 
-            <Button
-              onClick={this.handleReset}
-              className="w-full"
-              data-testid="button-reset-error"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reload Application
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={this.handleReset}
+                variant="outline"
+                className="flex-1"
+                data-testid="button-reset-error"
+              >
+                Try Again
+              </Button>
+              <Button
+                onClick={this.handleReload}
+                className="flex-1"
+                data-testid="button-reload-app"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Reload App
+              </Button>
+            </div>
           </div>
         </div>
       );
