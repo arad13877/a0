@@ -17,6 +17,7 @@ import {
   checkAccessibility
 } from "./gemini";
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
+import { validateAnalysisResult } from "@shared/ai-schemas";
 import { registerGitRoutes } from "./git";
 
 function handleApiError(error: unknown, res: Response, defaultMessage: string) {
@@ -454,7 +455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await reviewCode(file.name, file.content);
+      const rawResult = await reviewCode(file.name, file.content);
+      const result = validateAnalysisResult("review", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -477,7 +479,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await explainCode(file.name, file.content);
+      const rawResult = await explainCode(file.name, file.content);
+      const result = validateAnalysisResult("explain", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -500,7 +503,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await suggestRefactoring(file.name, file.content);
+      const rawResult = await suggestRefactoring(file.name, file.content);
+      const result = validateAnalysisResult("refactor", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -523,7 +527,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await detectBugs(file.name, file.content);
+      const rawResult = await detectBugs(file.name, file.content);
+      const result = validateAnalysisResult("bugs", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -547,15 +552,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const documentedCode = await generateDocumentation(file.name, file.content);
+      const rawDocumentedCode = await generateDocumentation(file.name, file.content);
+      const result = validateAnalysisResult("document", { documentedCode: rawDocumentedCode });
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
         analysisType: "documentation",
-        result: documentedCode,
+        result: result.documentedCode,
       });
 
-      res.json({ analysis, documentedCode });
+      res.json({ analysis, result });
     } catch (error) {
       handleApiError(error, res, "Failed to generate documentation");
     }
@@ -570,7 +576,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await analyzePerformance(file.name, file.content);
+      const rawResult = await analyzePerformance(file.name, file.content);
+      const result = validateAnalysisResult("performance", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -594,7 +601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await scanSecurity(file.name, file.content);
+      const rawResult = await scanSecurity(file.name, file.content);
+      const result = validateAnalysisResult("security", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -619,7 +627,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
 
-      const result = await checkAccessibility(file.name, file.content);
+      const rawResult = await checkAccessibility(file.name, file.content);
+      const result = validateAnalysisResult("accessibility", rawResult);
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
