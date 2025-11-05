@@ -1,7 +1,21 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateCode, chatWithAI, analyzeDesign, generateTests, isAIAvailable } from "./gemini";
+import { 
+  generateCode, 
+  chatWithAI, 
+  analyzeDesign, 
+  generateTests, 
+  isAIAvailable,
+  reviewCode,
+  explainCode,
+  suggestRefactoring,
+  detectBugs,
+  generateDocumentation,
+  analyzePerformance,
+  scanSecurity,
+  checkAccessibility
+} from "./gemini";
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
 import { registerGitRoutes } from "./git";
 
@@ -428,6 +442,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(restoredFile);
     } catch (error) {
       handleApiError(error, res, "Failed to restore file version");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/review", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await reviewCode(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "code-review",
+        result: JSON.stringify(result),
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to review code");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/explain", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await explainCode(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "code-explanation",
+        result: JSON.stringify(result),
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to explain code");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/refactor", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await suggestRefactoring(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "refactoring",
+        result: JSON.stringify(result),
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to suggest refactoring");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/bugs", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await detectBugs(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "bug-detection",
+        result: JSON.stringify(result),
+        severity: result.bugsFound > 0 ? "high" : "low",
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to detect bugs");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/document", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const documentedCode = await generateDocumentation(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "documentation",
+        result: documentedCode,
+      });
+
+      res.json({ analysis, documentedCode });
+    } catch (error) {
+      handleApiError(error, res, "Failed to generate documentation");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/performance", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await analyzePerformance(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "performance",
+        result: JSON.stringify(result),
+        severity: result.score < 50 ? "high" : result.score < 75 ? "medium" : "low",
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to analyze performance");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/security", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await scanSecurity(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "security",
+        result: JSON.stringify(result),
+        severity: result.riskLevel === "critical" || result.riskLevel === "high" ? "high" : 
+                  result.riskLevel === "medium" ? "medium" : "low",
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to scan security");
+    }
+  });
+
+  app.post("/api/files/:fileId/ai/accessibility", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      const result = await checkAccessibility(file.name, file.content);
+      
+      const analysis = await storage.createAiAnalysis({
+        fileId: file.id,
+        analysisType: "accessibility",
+        result: JSON.stringify(result),
+        severity: result.score < 50 ? "high" : result.score < 75 ? "medium" : "low",
+      });
+
+      res.json({ analysis, result });
+    } catch (error) {
+      handleApiError(error, res, "Failed to check accessibility");
+    }
+  });
+
+  app.get("/api/files/:fileId/ai/analyses", async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const analyses = await storage.getAiAnalysesByFile(fileId);
+      res.json(analyses);
+    } catch (error) {
+      handleApiError(error, res, "Failed to fetch AI analyses");
     }
   });
 
