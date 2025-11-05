@@ -27,6 +27,7 @@ import {
   Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { AIAnalysisResult } from "@shared/ai-schemas";
 
 interface AIAssistantPanelProps {
   fileId: number | null;
@@ -44,10 +45,6 @@ type AnalysisType =
   | "performance"
   | "security"
   | "accessibility";
-
-interface AnalysisResult {
-  [key: string]: any;
-}
 
 const analysisOptions = [
   {
@@ -114,7 +111,7 @@ export default function AIAssistantPanel({
   isOpen,
   onClose,
 }: AIAssistantPanelProps) {
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisType | null>(null);
   const { toast } = useToast();
 

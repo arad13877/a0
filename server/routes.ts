@@ -17,7 +17,14 @@ import {
   checkAccessibility
 } from "./gemini";
 import { insertProjectSchema, insertFileSchema, insertMessageSchema, insertFileVersionSchema, insertTestSchema, type ProjectAnalysis } from "@shared/schema";
-import { validateAnalysisResult } from "@shared/ai-schemas";
+import { 
+  validateAnalysisResult,
+  type BugDetectionResult,
+  type DocumentationResult,
+  type PerformanceResult,
+  type SecurityResult,
+  type AccessibilityResult
+} from "@shared/ai-schemas";
 import { registerGitRoutes } from "./git";
 
 function handleApiError(error: unknown, res: Response, defaultMessage: string) {
@@ -528,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rawResult = await detectBugs(file.name, file.content);
-      const result = validateAnalysisResult("bugs", rawResult);
+      const result = validateAnalysisResult("bugs", rawResult) as BugDetectionResult;
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -553,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rawDocumentedCode = await generateDocumentation(file.name, file.content);
-      const result = validateAnalysisResult("document", { documentedCode: rawDocumentedCode });
+      const result = validateAnalysisResult("document", { documentedCode: rawDocumentedCode }) as DocumentationResult;
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -577,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rawResult = await analyzePerformance(file.name, file.content);
-      const result = validateAnalysisResult("performance", rawResult);
+      const result = validateAnalysisResult("performance", rawResult) as PerformanceResult;
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -602,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rawResult = await scanSecurity(file.name, file.content);
-      const result = validateAnalysisResult("security", rawResult);
+      const result = validateAnalysisResult("security", rawResult) as SecurityResult;
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
@@ -628,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rawResult = await checkAccessibility(file.name, file.content);
-      const result = validateAnalysisResult("accessibility", rawResult);
+      const result = validateAnalysisResult("accessibility", rawResult) as AccessibilityResult;
       
       const analysis = await storage.createAiAnalysis({
         fileId: file.id,
