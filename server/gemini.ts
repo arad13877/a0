@@ -1102,3 +1102,406 @@ Return ONLY the test code, no explanations. The code should be ready to run.`;
     throw new Error(`Failed to generate tests: ${errorMessage}`);
   }
 }
+
+import type { 
+  CodeReviewResult, 
+  CodeExplanation, 
+  RefactoringSuggestions, 
+  BugDetectionResult, 
+  PerformanceAnalysis, 
+  SecurityScanResult, 
+  AccessibilityCheckResult 
+} from "@shared/schema";
+
+export async function reviewCode(fileName: string, fileContent: string): Promise<CodeReviewResult> {
+  try {
+    const prompt = `You are a senior code reviewer with 15+ years of experience. Review the following code thoroughly and provide detailed feedback.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Analyze the code for:
+1. Code quality and best practices
+2. Potential bugs or issues
+3. Performance concerns
+4. Security vulnerabilities
+5. Readability and maintainability
+6. TypeScript/JavaScript best practices
+7. React best practices (if applicable)
+
+Return a JSON object with this structure:
+\`\`\`json
+{
+  "overallRating": <1-10>,
+  "summary": "Brief overview of code quality",
+  "issues": [
+    {
+      "line": <optional line number>,
+      "severity": "critical|warning|info",
+      "category": "bug|performance|security|style|best-practice",
+      "message": "Issue description",
+      "suggestion": "How to fix it"
+    }
+  ],
+  "strengths": ["List of good practices found"],
+  "improvements": ["Suggestions for improvement"]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.3, topP: 0.9, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Code review error:", error);
+    throw new Error(`Failed to review code: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function explainCode(fileName: string, fileContent: string): Promise<CodeExplanation> {
+  try {
+    const prompt = `You are a technical educator explaining code to developers. Explain the following code in clear, simple terms.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Provide a comprehensive explanation including:
+1. What this code does (summary)
+2. Main purpose/goal
+3. Key components/functions
+4. Important features
+5. Dependencies used
+6. How to use it
+
+Return a JSON object:
+\`\`\`json
+{
+  "summary": "One-sentence summary",
+  "purpose": "What problem this solves",
+  "components": [
+    {"name": "ComponentName", "type": "function|class|component", "description": "What it does"}
+  ],
+  "keyFeatures": ["Feature 1", "Feature 2"],
+  "dependencies": ["library1", "library2"],
+  "usage": "How to use this code"
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.5, maxOutputTokens: 3072 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Code explanation error:", error);
+    throw new Error(`Failed to explain code: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function suggestRefactoring(fileName: string, fileContent: string): Promise<RefactoringSuggestions> {
+  try {
+    const prompt = `You are a refactoring expert. Analyze this code and suggest improvements.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Suggest refactorings for:
+1. Code duplication
+2. Complex functions
+3. Poor naming
+4. Design patterns
+5. Modern JavaScript/TypeScript features
+6. Performance optimizations
+
+Return JSON:
+\`\`\`json
+{
+  "priority": "high|medium|low",
+  "suggestions": [
+    {
+      "title": "Refactoring name",
+      "description": "Why this refactoring helps",
+      "before": "Current code snippet",
+      "after": "Improved code snippet",
+      "benefit": "What improves",
+      "effort": "low|medium|high"
+    }
+  ]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.4, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Refactoring suggestion error:", error);
+    throw new Error(`Failed to suggest refactoring: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function detectBugs(fileName: string, fileContent: string): Promise<BugDetectionResult> {
+  try {
+    const prompt = `You are a bug detection specialist. Scan this code for potential bugs and issues.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Look for:
+1. Null/undefined errors
+2. Type mismatches
+3. Logic errors
+4. Edge cases not handled
+5. Async/await issues
+6. Memory leaks
+7. Race conditions
+
+Return JSON:
+\`\`\`json
+{
+  "bugsFound": <number>,
+  "bugs": [
+    {
+      "severity": "critical|major|minor",
+      "type": "null-error|type-error|logic-error|async-issue|memory-leak|race-condition",
+      "line": <optional line number>,
+      "description": "What the bug is",
+      "fix": "How to fix it",
+      "impact": "What could happen"
+    }
+  ],
+  "potentialIssues": ["Other concerns"]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.2, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Bug detection error:", error);
+    throw new Error(`Failed to detect bugs: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function generateDocumentation(fileName: string, fileContent: string): Promise<string> {
+  try {
+    const prompt = `Generate comprehensive JSDoc/TSDoc documentation for this code.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Generate:
+1. File header comment
+2. Function/class documentation
+3. Parameter descriptions
+4. Return type descriptions
+5. Usage examples
+6. @example tags where appropriate
+
+Return the FULL code with documentation added. No explanations, just the documented code.`;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.3, maxOutputTokens: 8192 },
+    });
+
+    let docCode = result.text || "";
+    docCode = docCode.replace(/```typescript\n?/g, "").replace(/```tsx\n?/g, "").replace(/```javascript\n?/g, "").replace(/```\n?/g, "");
+    return docCode;
+  } catch (error) {
+    console.error("Documentation generation error:", error);
+    throw new Error(`Failed to generate documentation: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function analyzePerformance(fileName: string, fileContent: string): Promise<PerformanceAnalysis> {
+  try {
+    const prompt = `You are a performance optimization expert. Analyze this code for performance issues.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Check for:
+1. Unnecessary re-renders (React)
+2. Missing memoization
+3. Inefficient loops
+4. Heavy computations
+5. Bundle size issues
+6. N+1 queries
+7. Memory inefficiencies
+
+Return JSON:
+\`\`\`json
+{
+  "score": <1-100>,
+  "issues": [
+    {
+      "category": "rendering|computation|memory|network",
+      "severity": "high|medium|low",
+      "description": "Performance issue description",
+      "recommendation": "How to fix",
+      "estimatedImpact": "Expected improvement"
+    }
+  ],
+  "optimizations": ["Quick wins for performance"]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.3, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Performance analysis error:", error);
+    throw new Error(`Failed to analyze performance: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function scanSecurity(fileName: string, fileContent: string): Promise<SecurityScanResult> {
+  try {
+    const prompt = `You are a security expert. Scan this code for security vulnerabilities.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Check for:
+1. XSS vulnerabilities
+2. SQL injection risks
+3. Exposed secrets/API keys
+4. Insecure data handling
+5. Authentication issues
+6. Authorization flaws
+7. CSRF vulnerabilities
+
+Return JSON:
+\`\`\`json
+{
+  "riskLevel": "critical|high|medium|low|safe",
+  "vulnerabilities": [
+    {
+      "type": "xss|sql-injection|exposed-secret|auth-issue|csrf|other",
+      "severity": "critical|high|medium|low",
+      "description": "Security issue",
+      "location": "Where in code",
+      "fix": "How to fix",
+      "cve": "CVE ID if applicable"
+    }
+  ],
+  "recommendations": ["Security best practices"]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.2, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Security scan error:", error);
+    throw new Error(`Failed to scan security: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export async function checkAccessibility(fileName: string, fileContent: string): Promise<AccessibilityCheckResult> {
+  try {
+    const prompt = `You are an accessibility (a11y) expert. Check this code for accessibility issues.
+
+**File**: ${fileName}
+
+**Code**:
+\`\`\`
+${fileContent}
+\`\`\`
+
+Check WCAG 2.1 compliance:
+1. Semantic HTML
+2. ARIA labels
+3. Keyboard navigation
+4. Focus management
+5. Color contrast
+6. Alt text for images
+7. Form labels
+
+Return JSON:
+\`\`\`json
+{
+  "score": <1-100>,
+  "wcagLevel": "A|AA|AAA|None",
+  "issues": [
+    {
+      "rule": "WCAG rule violated",
+      "impact": "critical|serious|moderate|minor",
+      "description": "What's wrong",
+      "element": "Element affected",
+      "fix": "How to fix"
+    }
+  ],
+  "passed": ["Accessibility features done well"]
+}
+\`\`\``;
+
+    const result = await getGenAI().models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.3, maxOutputTokens: 4096 },
+    });
+
+    const text = (result.text || "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Accessibility check error:", error);
+    throw new Error(`Failed to check accessibility: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
