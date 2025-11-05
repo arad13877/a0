@@ -146,6 +146,8 @@ export default function AIAssistantPanel({
 
   const renderResult = () => {
     if (!analysisResult || !currentAnalysis) return null;
+    
+    const result = analysisResult as any;
 
     switch (currentAnalysis) {
       case "review":
@@ -153,17 +155,17 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-review">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Code Quality Rating</h3>
-              <Badge variant={analysisResult.overallRating >= 7 ? "default" : "destructive"}>
-                {analysisResult.overallRating}/10
+              <Badge variant={result.overallRating >= 7 ? "default" : "destructive"}>
+                {result.overallRating}/10
               </Badge>
             </div>
-            <p className="text-muted-foreground">{analysisResult.summary}</p>
+            <p className="text-muted-foreground">{result.summary}</p>
             
-            {analysisResult.issues?.length > 0 && (
+            {result.issues?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Issues Found</h4>
                 <div className="space-y-2">
-                  {analysisResult.issues.map((issue: any, i: number) => (
+                  {result.issues.map((issue: any, i: number) => (
                     <div
                       key={i}
                       className="p-3 rounded-lg border bg-card"
@@ -204,25 +206,25 @@ export default function AIAssistantPanel({
               </div>
             )}
 
-            {analysisResult.strengths?.length > 0 && (
+            {result.strengths?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   Strengths
                 </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.strengths.map((s: string, i: number) => (
+                  {result.strengths.map((s: string, i: number) => (
                     <li key={i}>{s}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {analysisResult.improvements?.length > 0 && (
+            {result.improvements?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Recommendations</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.improvements.map((imp: string, i: number) => (
+                  {result.improvements.map((imp: string, i: number) => (
                     <li key={i}>{imp}</li>
                   ))}
                 </ul>
@@ -236,21 +238,21 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-explain">
             <div>
               <h3 className="text-lg font-semibold mb-2">Summary</h3>
-              <p className="text-muted-foreground">{analysisResult.summary}</p>
+              <p className="text-muted-foreground">{result.summary}</p>
             </div>
             
             <Separator />
             
             <div>
               <h4 className="font-semibold mb-2">Purpose</h4>
-              <p className="text-sm text-muted-foreground">{analysisResult.purpose}</p>
+              <p className="text-sm text-muted-foreground">{result.purpose}</p>
             </div>
 
-            {analysisResult.components?.length > 0 && (
+            {result.components?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Components</h4>
                 <div className="space-y-2">
-                  {analysisResult.components.map((comp: any, i: number) => (
+                  {result.components.map((comp: any, i: number) => (
                     <div key={i} className="p-2 rounded border bg-card" data-testid={`component-${i}`}>
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="secondary">{comp.type}</Badge>
@@ -263,21 +265,21 @@ export default function AIAssistantPanel({
               </div>
             )}
 
-            {analysisResult.keyFeatures?.length > 0 && (
+            {result.keyFeatures?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Key Features</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.keyFeatures.map((f: string, i: number) => (
+                  {result.keyFeatures.map((f: string, i: number) => (
                     <li key={i}>{f}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {analysisResult.usage && (
+            {result.usage && (
               <div>
                 <h4 className="font-semibold mb-2">How to Use</h4>
-                <p className="text-sm text-muted-foreground">{analysisResult.usage}</p>
+                <p className="text-sm text-muted-foreground">{result.usage}</p>
               </div>
             )}
           </div>
@@ -288,10 +290,10 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-refactor">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Refactoring Suggestions</h3>
-              <Badge>{analysisResult.priority} priority</Badge>
+              <Badge>{result.priority} priority</Badge>
             </div>
             
-            {analysisResult.suggestions?.map((sug: any, i: number) => (
+            {result.suggestions?.map((sug: any, i: number) => (
               <div key={i} className="p-4 rounded-lg border bg-card" data-testid={`suggestion-${i}`}>
                 <h4 className="font-semibold mb-2">{sug.title}</h4>
                 <p className="text-sm text-muted-foreground mb-3">{sug.description}</p>
@@ -328,12 +330,12 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-bugs">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Bug Detection Results</h3>
-              <Badge variant={analysisResult.bugsFound > 0 ? "destructive" : "default"}>
-                {analysisResult.bugsFound} bugs found
+              <Badge variant={result.bugsFound > 0 ? "destructive" : "default"}>
+                {result.bugsFound} bugs found
               </Badge>
             </div>
 
-            {analysisResult.bugs?.map((bug: any, i: number) => (
+            {result.bugs?.map((bug: any, i: number) => (
               <div
                 key={i}
                 className="p-4 rounded-lg border bg-card"
@@ -371,11 +373,11 @@ export default function AIAssistantPanel({
               </div>
             ))}
 
-            {analysisResult.potentialIssues?.length > 0 && (
+            {result.potentialIssues?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Potential Issues</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.potentialIssues.map((issue: string, i: number) => (
+                  {result.potentialIssues.map((issue: string, i: number) => (
                     <li key={i}>{issue}</li>
                   ))}
                 </ul>
@@ -389,7 +391,7 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-document">
             <h3 className="text-lg font-semibold">Generated Documentation</h3>
             <pre className="p-4 rounded-lg border bg-card text-xs overflow-x-auto">
-              <code>{analysisResult.documentedCode || analysisResult}</code>
+              <code>{result.documentedCode || analysisResult}</code>
             </pre>
           </div>
         );
@@ -399,12 +401,12 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-performance">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Performance Score</h3>
-              <Badge variant={analysisResult.score >= 75 ? "default" : "destructive"}>
-                {analysisResult.score}/100
+              <Badge variant={result.score >= 75 ? "default" : "destructive"}>
+                {result.score}/100
               </Badge>
             </div>
 
-            {analysisResult.issues?.map((issue: any, i: number) => (
+            {result.issues?.map((issue: any, i: number) => (
               <div key={i} className="p-4 rounded-lg border bg-card" data-testid={`perf-issue-${i}`}>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge>{issue.category}</Badge>
@@ -424,11 +426,11 @@ export default function AIAssistantPanel({
               </div>
             ))}
 
-            {analysisResult.optimizations?.length > 0 && (
+            {result.optimizations?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Quick Wins</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.optimizations.map((opt: string, i: number) => (
+                  {result.optimizations.map((opt: string, i: number) => (
                     <li key={i}>{opt}</li>
                   ))}
                 </ul>
@@ -444,16 +446,16 @@ export default function AIAssistantPanel({
               <h3 className="text-lg font-semibold">Security Scan</h3>
               <Badge
                 variant={
-                  analysisResult.riskLevel === "critical" || analysisResult.riskLevel === "high"
+                  result.riskLevel === "critical" || result.riskLevel === "high"
                     ? "destructive"
                     : "default"
                 }
               >
-                {analysisResult.riskLevel} risk
+                {result.riskLevel} risk
               </Badge>
             </div>
 
-            {analysisResult.vulnerabilities?.map((vuln: any, i: number) => (
+            {result.vulnerabilities?.map((vuln: any, i: number) => (
               <div
                 key={i}
                 className="p-4 rounded-lg border bg-card"
@@ -484,11 +486,11 @@ export default function AIAssistantPanel({
               </div>
             ))}
 
-            {analysisResult.recommendations?.length > 0 && (
+            {result.recommendations?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Security Recommendations</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.recommendations.map((rec: string, i: number) => (
+                  {result.recommendations.map((rec: string, i: number) => (
                     <li key={i}>{rec}</li>
                   ))}
                 </ul>
@@ -502,13 +504,13 @@ export default function AIAssistantPanel({
           <div className="space-y-4" data-testid="result-accessibility">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Accessibility Score</h3>
-              <Badge variant={analysisResult.score >= 75 ? "default" : "destructive"}>
-                {analysisResult.score}/100
+              <Badge variant={result.score >= 75 ? "default" : "destructive"}>
+                {result.score}/100
               </Badge>
-              <Badge variant="outline">{analysisResult.wcagLevel || "N/A"}</Badge>
+              <Badge variant="outline">{result.wcagLevel || "N/A"}</Badge>
             </div>
 
-            {analysisResult.issues?.map((issue: any, i: number) => (
+            {result.issues?.map((issue: any, i: number) => (
               <div key={i} className="p-4 rounded-lg border bg-card" data-testid={`a11y-issue-${i}`}>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge>{issue.rule}</Badge>
@@ -536,14 +538,14 @@ export default function AIAssistantPanel({
               </div>
             ))}
 
-            {analysisResult.passed?.length > 0 && (
+            {result.passed?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   Passed Checks
                 </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {analysisResult.passed.map((check: string, i: number) => (
+                  {result.passed.map((check: string, i: number) => (
                     <li key={i}>{check}</li>
                   ))}
                 </ul>

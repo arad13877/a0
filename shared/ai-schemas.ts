@@ -134,3 +134,35 @@ export function validateAnalysisResult(type: string, data: unknown): AIAnalysisR
       throw new Error(`Unknown analysis type: ${type}`);
   }
 }
+
+export function isCodeReviewResult(result: AIAnalysisResult): result is CodeReviewResult {
+  return 'overallRating' in result;
+}
+
+export function isCodeExplanationResult(result: AIAnalysisResult): result is CodeExplanationResult {
+  return 'purpose' in result && 'summary' in result;
+}
+
+export function isRefactoringResult(result: AIAnalysisResult): result is RefactoringResult {
+  return 'priority' in result && 'suggestions' in result;
+}
+
+export function isBugDetectionResult(result: AIAnalysisResult): result is BugDetectionResult {
+  return 'bugsFound' in result;
+}
+
+export function isDocumentationResult(result: AIAnalysisResult): result is DocumentationResult {
+  return 'documentedCode' in result;
+}
+
+export function isPerformanceResult(result: AIAnalysisResult): result is PerformanceResult {
+  return 'score' in result && 'optimizations' in result;
+}
+
+export function isSecurityResult(result: AIAnalysisResult): result is SecurityResult {
+  return 'riskLevel' in result;
+}
+
+export function isAccessibilityResult(result: AIAnalysisResult): result is AccessibilityResult {
+  return 'score' in result && 'wcagLevel' in result;
+}
