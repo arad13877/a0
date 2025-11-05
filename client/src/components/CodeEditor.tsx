@@ -1,11 +1,12 @@
 import Editor from "@monaco-editor/react";
-import { X, Save, FlaskConical } from "lucide-react";
+import { X, Save, FlaskConical, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import VersionHistory from "./VersionHistory";
+import AIAssistantPanel from "./AIAssistantPanel";
 
 interface Tab {
   id: string;
@@ -52,6 +53,7 @@ export default function CodeEditor({
   const activeTabData = tabs.find((t) => t.id === activeTab);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [currentContent, setCurrentContent] = useState(activeTabData?.content || "");
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -172,6 +174,18 @@ export default function CodeEditor({
                   Generate Tests
                 </Button>
               )}
+              {activeTabData?.fileId && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 gap-1"
+                  onClick={() => setIsAIAssistantOpen(true)}
+                  data-testid="button-ai-assistant"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  AI Assistant
+                </Button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground" data-testid="status-language">{language}</span>
@@ -197,6 +211,12 @@ export default function CodeEditor({
           </p>
         </div>
       )}
+      <AIAssistantPanel
+        fileId={activeTabData?.fileId || null}
+        fileName={activeTabData?.name || ""}
+        isOpen={isAIAssistantOpen}
+        onClose={() => setIsAIAssistantOpen(false)}
+      />
     </div>
   );
 }
