@@ -8,7 +8,9 @@ import {
   type FileVersion,
   type InsertFileVersion,
   type Test,
-  type InsertTest
+  type InsertTest,
+  type AiAnalysis,
+  type InsertAiAnalysis
 } from "@shared/schema";
 
 export interface IStorage {
@@ -36,6 +38,11 @@ export interface IStorage {
   getTestsByFile(fileId: number): Promise<Test[]>;
   updateTest(id: number, updates: Partial<InsertTest>): Promise<Test | undefined>;
   deleteTest(id: number): Promise<boolean>;
+
+  createAiAnalysis(analysis: InsertAiAnalysis): Promise<AiAnalysis>;
+  getAiAnalysesByFile(fileId: number): Promise<AiAnalysis[]>;
+  getLatestAiAnalysis(fileId: number, analysisType: string): Promise<AiAnalysis | undefined>;
+  deleteAiAnalysesByFile(fileId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -44,11 +51,13 @@ export class MemStorage implements IStorage {
   private messages: Map<number, Message>;
   private fileVersions: Map<number, FileVersion>;
   private tests: Map<number, Test>;
+  private aiAnalyses: Map<number, AiAnalysis>;
   private projectIdCounter: number;
   private fileIdCounter: number;
   private messageIdCounter: number;
   private versionIdCounter: number;
   private testIdCounter: number;
+  private analysisIdCounter: number;
 
   constructor() {
     this.projects = new Map();
@@ -56,11 +65,13 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.fileVersions = new Map();
     this.tests = new Map();
+    this.aiAnalyses = new Map();
     this.projectIdCounter = 1;
     this.fileIdCounter = 1;
     this.messageIdCounter = 1;
     this.versionIdCounter = 1;
     this.testIdCounter = 1;
+    this.analysisIdCounter = 1;
   }
 
   async createProject(insertProject: InsertProject): Promise<Project> {
@@ -240,6 +251,40 @@ export class MemStorage implements IStorage {
   async deleteTest(id: number): Promise<boolean> {
     return this.tests.delete(id);
   }
+
+  async createAiAnalysis(insertAnalysis: InsertAiAnalysis): Promise<AiAnalysis> {
+    const id = this.analysisIdCounter++;
+    const analysis: AiAnalysis = {
+      ...insertAnalysis,
+      id,
+      severity: insertAnalysis.severity || null,
+      suggestions: insertAnalysis.suggestions || null,
+      metadata: insertAnalysis.metadata || null,
+      createdAt: new Date(),
+    };
+    this.aiAnalyses.set(id, analysis);
+    return analysis;
+  }
+
+  async getAiAnalysesByFile(fileId: number): Promise<AiAnalysis[]> {
+    return Array.from(this.aiAnalyses.values())
+      .filter(a => a.fileId === fileId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getLatestAiAnalysis(fileId: number, analysisType: string): Promise<AiAnalysis | undefined> {
+    const analyses = Array.from(this.aiAnalyses.values())
+      .filter(a => a.fileId === fileId && a.analysisType === analysisType)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return analyses[0];
+  }
+
+  async deleteAiAnalysesByFile(fileId: number): Promise<boolean> {
+    const toDelete = Array.from(this.aiAnalyses.values())
+      .filter(a => a.fileId === fileId);
+    toDelete.forEach(a => this.aiAnalyses.delete(a.id));
+    return true;
+  }
 }
 
 export class DbStorage implements IStorage {
@@ -413,6 +458,40 @@ export class DbStorage implements IStorage {
     const { eq } = await import('drizzle-orm');
     const result = await this.db.delete(tests).where(eq(tests.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async createAiAnalysis(insertAnalysis: InsertAiAnalysis): Promise<AiAnalysis> {
+    const { aiAnalyses } = await import('@shared/schema');
+    const [analysis] = await this.db.insert(aiAnalyses).values(insertAnalysis).returning();
+    return analysis;
+  }
+
+  async getAiAnalysesByFile(fileId: number): Promise<AiAnalysis[]> {
+    const { aiAnalyses } = await import('@shared/schema');
+    const { eq, desc } = await import('drizzle-orm');
+    return this.db.select().from(aiAnalyses)
+      .where(eq(aiAnalyses.fileId, fileId))
+      .orderBy(desc(aiAnalyses.createdAt));
+  }
+
+  async getLatestAiAnalysis(fileId: number, analysisType: string): Promise<AiAnalysis | undefined> {
+    const { aiAnalyses } = await import('@shared/schema');
+    const { eq, desc, and } = await import('drizzle-orm');
+    const [analysis] = await this.db.select().from(aiAnalyses)
+      .where(and(
+        eq(aiAnalyses.fileId, fileId),
+        eq(aiAnalyses.analysisType, analysisType)
+      ))
+      .orderBy(desc(aiAnalyses.createdAt))
+      .limit(1);
+    return analysis;
+  }
+
+  async deleteAiAnalysesByFile(fileId: number): Promise<boolean> {
+    const { aiAnalyses } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    await this.db.delete(aiAnalyses).where(eq(aiAnalyses.fileId, fileId));
+    return true;
   }
 }
 

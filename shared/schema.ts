@@ -49,6 +49,17 @@ export const tests = pgTable("tests", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const aiAnalyses = pgTable("ai_analyses", {
+  id: serial("id").primaryKey(),
+  fileId: integer("file_id").notNull(),
+  analysisType: text("analysis_type").notNull(),
+  result: text("result").notNull(),
+  severity: text("severity"),
+  suggestions: text("suggestions"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,
@@ -76,6 +87,11 @@ export const insertTestSchema = createInsertSchema(tests).omit({
   updatedAt: true,
 });
 
+export const insertAiAnalysisSchema = createInsertSchema(aiAnalyses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
 
@@ -90,6 +106,9 @@ export type FileVersion = typeof fileVersions.$inferSelect;
 
 export type InsertTest = z.infer<typeof insertTestSchema>;
 export type Test = typeof tests.$inferSelect;
+
+export type InsertAiAnalysis = z.infer<typeof insertAiAnalysisSchema>;
+export type AiAnalysis = typeof aiAnalyses.$inferSelect;
 
 export interface SolutionOption {
   id: string;
@@ -137,4 +156,104 @@ export interface NetworkRequest {
   status?: number;
   duration?: number;
   timestamp: number;
+}
+
+export type AnalysisType = 
+  | "code-review"
+  | "code-explain"
+  | "refactor"
+  | "bug-detect"
+  | "documentation"
+  | "performance"
+  | "security"
+  | "accessibility";
+
+export interface CodeReviewResult {
+  overallRating: number;
+  summary: string;
+  issues: Array<{
+    line?: number;
+    severity: "critical" | "warning" | "info";
+    category: string;
+    message: string;
+    suggestion?: string;
+  }>;
+  strengths: string[];
+  improvements: string[];
+}
+
+export interface CodeExplanation {
+  summary: string;
+  purpose: string;
+  components: Array<{
+    name: string;
+    type: string;
+    description: string;
+  }>;
+  keyFeatures: string[];
+  dependencies: string[];
+  usage: string;
+}
+
+export interface RefactoringSuggestions {
+  priority: "high" | "medium" | "low";
+  suggestions: Array<{
+    title: string;
+    description: string;
+    before: string;
+    after: string;
+    benefit: string;
+    effort: "low" | "medium" | "high";
+  }>;
+}
+
+export interface BugDetectionResult {
+  bugsFound: number;
+  bugs: Array<{
+    severity: "critical" | "major" | "minor";
+    type: string;
+    line?: number;
+    description: string;
+    fix: string;
+    impact: string;
+  }>;
+  potentialIssues: string[];
+}
+
+export interface PerformanceAnalysis {
+  score: number;
+  issues: Array<{
+    category: string;
+    severity: "high" | "medium" | "low";
+    description: string;
+    recommendation: string;
+    estimatedImpact: string;
+  }>;
+  optimizations: string[];
+}
+
+export interface SecurityScanResult {
+  riskLevel: "critical" | "high" | "medium" | "low" | "safe";
+  vulnerabilities: Array<{
+    type: string;
+    severity: "critical" | "high" | "medium" | "low";
+    description: string;
+    location?: string;
+    fix: string;
+    cve?: string;
+  }>;
+  recommendations: string[];
+}
+
+export interface AccessibilityCheckResult {
+  score: number;
+  wcagLevel: "A" | "AA" | "AAA" | "None";
+  issues: Array<{
+    rule: string;
+    impact: "critical" | "serious" | "moderate" | "minor";
+    description: string;
+    element?: string;
+    fix: string;
+  }>;
+  passed: string[];
 }
