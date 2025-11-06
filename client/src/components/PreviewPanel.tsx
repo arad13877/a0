@@ -15,6 +15,7 @@ interface FileData {
 interface PreviewPanelProps {
   files?: FileData[];
   onClose?: () => void;
+  url?: string;
 }
 
 type DeviceType = "desktop" | "tablet" | "mobile";
