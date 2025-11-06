@@ -77,11 +77,21 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
+
+  // On Windows (process.platform === 'win32') some socket options like
+  // reusePort or binding to 0.0.0.0 may cause ENOTSUP. Use a safer default
+  // there: bind to 127.0.0.1 and avoid setting reusePort. On other platforms
+  // keep the original behavior.
+  const listenOptions: any = {
     port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+    host: process.platform === 'win32' ? '127.0.0.1' : '0.0.0.0',
+  };
+
+  if (process.platform !== 'win32') {
+    listenOptions.reusePort = true;
+  }
+
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
   });
 })();
