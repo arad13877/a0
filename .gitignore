@@ -7,3 +7,4 @@ vite.config.ts.*
 # Ignore local/Replit state and config
 .local/
 .replit
+ .env
